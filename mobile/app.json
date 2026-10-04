@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "GoalFund",
+    "slug": "goalfund",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.antmomo.goalfund",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF7F0"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "goalfund-demo"
+      }
+    }
+  }
+}
