@@ -23,6 +23,9 @@ dal menu in alto, viene ricordata nel browser e all'inizio segue quella del disp
 
 ## Tariffe (`src/lib/pricing.ts`)
 
+> **Prezzi di prova attivi:** con `TEST_PRICING = true` ogni fascia costa 0,50 € (il minimo accettato da
+> Stripe per l'euro). Per tornare ai prezzi qui sotto impostare `TEST_PRICING = false`.
+
 | Peso     | Totale | Messenger | Sito   |
 |----------|--------|-----------|--------|
 | 0–5 kg   | 10 €   | 5 €       | 5 €    |
