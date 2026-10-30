@@ -195,6 +195,8 @@ export const en: Dict = {
     messengersTitle: "Departing Messengers",
     messengersTo: (city) => `Messengers flying to ${city}`,
     noMessengers: "No Messengers registered for this day. Try another date or",
+    upcoming: "Upcoming Messengers",
+    upcomingHint: "No Messengers on this day, but here are those flying in the next days on the same route:",
     becomeMessenger: "become a Messenger yourself",
     verified: "✓ Verified",
     docUploaded: "🪪 ID uploaded",

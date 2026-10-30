@@ -141,10 +141,6 @@ export function airportName(iata: string, lang = "it"): string {
   return a ? (a.names[lang as keyof Names] ?? a.names.en) : iata;
 }
 
-export function countryFlag(country: string): string {
-  return String.fromCodePoint(...[...country.toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
-}
-
 /** Una tratta valida va dall'Africa all'Europa o dall'Europa all'Africa. */
 export function isValidRoute(from: string, to: string): boolean {
   const a = BY_IATA.get(from);

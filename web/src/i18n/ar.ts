@@ -194,6 +194,8 @@ export const ar: Dict = {
     messengersTitle: "المسافرون المغادرون",
     messengersTo: (city) => `المسافرون المتجهون إلى ${city}`,
     noMessengers: "لا يوجد مسافرون مسجلون في هذا اليوم. جرّب تاريخًا آخر أو",
+    upcoming: "المسافرون المتاحون قريبًا",
+    upcomingHint: "لا يوجد مسافرون في هذا اليوم، لكن هؤلاء يسافرون في الأيام القادمة على نفس المسار:",
     becomeMessenger: "كن أنت مسافرًا ناقلًا",
     verified: "✓ موثّق",
     docUploaded: "🪪 تم رفع الهوية",

@@ -1,5 +1,5 @@
 import { useI18n } from "../i18n";
-import { airportsIn, countryFlag, type Region } from "../lib/catalog";
+import { airportsIn, type Region } from "../lib/catalog";
 
 type Props = {
   name?: string;
@@ -19,7 +19,7 @@ export default function AirportSelect({ name, value, onChange, regions, emptyLab
         <optgroup key={region} label={t.regions[region]}>
           {airportsIn(region).map((a) => (
             <option key={a.iata} value={a.iata}>
-              {countryFlag(a.country)} {fmt.airport(a.iata)} ({a.iata})
+              {fmt.airport(a.iata)} ({a.iata})
             </option>
           ))}
         </optgroup>

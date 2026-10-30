@@ -45,7 +45,7 @@ export default function FlightsPage() {
     let cancelled = false;
     setLoading(true);
     setError("");
-    Promise.all([api.flights(from, date), api.listMessengers({ from, date })])
+    Promise.all([api.flights(from, date), api.listMessengers({ from })])
       .then(([f, m]) => {
         if (cancelled) return;
         setFlights(f);
@@ -62,11 +62,16 @@ export default function FlightsPage() {
 
   const matchesDestination = (iata: string) => !toCountry || getAirport(iata)?.country === toCountry;
   const visibleFlights = (flights?.flights ?? []).filter((f) => matchesDestination(f.to));
-  const visibleMessengers = messengers.filter((m) => matchesDestination(m.flight.to));
+  // I Messenger arrivano per tutte le date future: quelli del giorno scelto e, se non ce ne sono, i prossimi.
+  const routeMessengers = messengers.filter((m) => matchesDestination(m.flight.to));
+  const dayMessengers = routeMessengers.filter((m) => m.flight.date === date);
+  const upcomingMessengers = routeMessengers.filter((m) => m.flight.date > date);
+  const showUpcoming = dayMessengers.length === 0 && upcomingMessengers.length > 0;
+  const visibleMessengers = showUpcoming ? upcomingMessengers : dayMessengers;
 
   const destinationName = (f: Flight) => (getAirport(f.to) ? fmt.airport(f.to) : f.toName);
   const countFor = (f: Flight) =>
-    messengers.filter((m) =>
+    messengers.filter((m) => m.flight.date === date).filter((m) =>
       m.flight.flightNumber
         ? normalizeFlightNumber(m.flight.flightNumber) === normalizeFlightNumber(f.flightNumber)
         : m.flight.to === f.to,
@@ -208,7 +213,10 @@ export default function FlightsPage() {
           )}
         </div>
 
-        <h2 className="section-title left">{to ? ft.messengersTo(fmt.airport(to)) : ft.messengersTitle}</h2>
+        <h2 className="section-title left">
+          {showUpcoming ? ft.upcoming : to ? ft.messengersTo(fmt.airport(to)) : ft.messengersTitle}
+        </h2>
+        {showUpcoming && <p className="alert alert-info">📅 {ft.upcomingHint}</p>}
         {!loading && visibleMessengers.length === 0 && (
           <p className="empty card">
             {ft.noMessengers} <Link to="/messenger">{ft.becomeMessenger}</Link>.
@@ -230,6 +238,10 @@ export default function FlightsPage() {
                   </div>
                 </div>
                 <dl>
+                  <div>
+                    <dt>{ft.day}</dt>
+                    <dd>{fmt.date(m.flight.date)}</dd>
+                  </div>
                   <div>
                     <dt>{ft.route}</dt>
                     <dd>
