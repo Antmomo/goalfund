@@ -12,6 +12,10 @@ o da Alessandria (HBE) verso l'Europa e portano documenti, vestiti, dolci e ogge
 3. **Pagamento riuscito** (`/pagamento/successo`): il server verifica il pagamento su Stripe e solo allora
    mostra telefono, WhatsApp ed email del Messenger.
 4. **Messenger** (`/messenger`): dati, documento d'identità (privato), volo, data e kg disponibili.
+5. **Admin** (`/admin`, non collegato dal menu): accesso con password, verifica dei Messenger
+   (documenti, approva / rifiuta con motivo / rimetti in verifica), elenco spedizioni con foto e dati cliente,
+   riepilogo incassi, commissioni e quote da pagare ai Messenger.
+   I Messenger rifiutati spariscono dall'elenco pubblico e non possono essere pagati.
 
 ## Tariffe (`src/lib/pricing.ts`)
 
@@ -32,7 +36,8 @@ o da Alessandria (HBE) verso l'Europa e portano documenti, vestiti, dolci e ogge
 
 ## Variabili d'ambiente
 
-Vedi `.env.example`: `STRIPE_SECRET_KEY` (obbligatoria per i pagamenti), `AERODATABOX_API_KEY` (facoltativa).
+Vedi `.env.example`: `STRIPE_SECRET_KEY` (obbligatoria per i pagamenti), `ADMIN_PASSWORD` (obbligatoria per
+`/admin`), `ADMIN_SESSION_SECRET` e `AERODATABOX_API_KEY` (facoltative).
 
 ## Sviluppo locale
 

@@ -26,6 +26,8 @@ export type Shipment = {
   paidAt?: string;
 };
 
+export type MessengerStatus = "in_verifica" | "verificato" | "rifiutato";
+
 export type Messenger = {
   id: string;
   createdAt: string;
@@ -37,6 +39,10 @@ export type Messenger = {
   flight: { from: string; to: string; date: string; flightNumber?: string };
   availableKg: number;
   verified: boolean;
+  /** Assente nei Messenger registrati prima del pannello admin: vedi messengerStatus(). */
+  status?: MessengerStatus;
+  reviewedAt?: string;
+  rejectionReason?: string;
 };
 
 /** Dati del Messenger visibili a tutti: niente telefono, email o documenti. */
@@ -70,4 +76,23 @@ export type ShipmentSummary = {
   tierId: string;
   departureAirport: string;
   goodsType: string;
+};
+
+export function messengerStatus(m: Pick<Messenger, "status" | "verified">): MessengerStatus {
+  return m.status ?? (m.verified ? "verificato" : "in_verifica");
+}
+
+/** Messenger con tutti i dati, visibile solo all'amministratore. */
+export type AdminMessenger = Messenger & { status: MessengerStatus };
+
+export type AdminShipment = Shipment & { messengerName?: string };
+
+export type AdminStats = {
+  messengersPending: number;
+  messengersVerified: number;
+  shipmentsWaiting: number;
+  shipmentsPaid: number;
+  revenueTotal: number;
+  platformFees: number;
+  messengerPayouts: number;
 };

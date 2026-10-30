@@ -1,19 +1,18 @@
 import type { Config } from "@netlify/functions";
 import { DEPARTURE_AIRPORTS, EUROPE_AIRPORTS } from "../../src/lib/catalog";
-import type { Messenger } from "../../src/lib/types";
+import { messengerStatus, type Messenger } from "../../src/lib/types";
 import { ValidationError, email, fail, files, isoDate, json, phone, text, todayIso } from "../lib/http";
-import { messengerDocuments, messengers, saveFiles, toPublic } from "../lib/store";
+import { listAll, messengerDocuments, messengers, saveFiles, toPublic } from "../lib/store";
 
 async function list(url: URL): Promise<Response> {
   const from = url.searchParams.get("from");
   const date = url.searchParams.get("date");
-  const store = messengers();
-  const { blobs } = await store.list();
-  const all = await Promise.all(blobs.map((b) => store.get(b.key, { type: "json" }) as Promise<Messenger | null>));
+  const all = await listAll<Messenger>(messengers());
 
   const today = todayIso();
   const result = all
-    .filter((m): m is Messenger => !!m && m.flight.date >= today && m.availableKg > 0)
+    .filter((m) => m.flight.date >= today && m.availableKg > 0)
+    .filter((m) => messengerStatus(m) !== "rifiutato")
     .filter((m) => !from || m.flight.from === from)
     .filter((m) => !date || m.flight.date === date)
     .sort((a, b) => a.flight.date.localeCompare(b.flight.date))
@@ -61,6 +60,7 @@ async function create(req: Request): Promise<Response> {
     flight: { from, to, date, flightNumber: flightNumber || undefined },
     availableKg,
     verified: false,
+    status: "in_verifica",
   };
 
   messenger.documentKeys = await saveFiles(messengerDocuments(), id, documents);

@@ -1,5 +1,6 @@
 import type { Config } from "@netlify/functions";
 import { getTier } from "../../src/lib/pricing";
+import { messengerStatus } from "../../src/lib/types";
 import { fail, json, todayIso } from "../lib/http";
 import { getMessenger, getShipment } from "../lib/store";
 import { getStripe } from "../lib/stripe";
@@ -16,6 +17,7 @@ export default async (req: Request) => {
   const [shipment, messenger] = await Promise.all([getShipment(body.shipmentId), getMessenger(body.messengerId)]);
   if (!shipment) return fail("Spedizione non trovata.", 404);
   if (!messenger) return fail("Messenger non trovato.", 404);
+  if (messengerStatus(messenger) === "rifiutato") return fail("Questo Messenger non è disponibile.", 409);
   if (shipment.status === "pagata") return fail("Questa spedizione è già stata pagata.", 409);
 
   const tier = getTier(shipment.tierId);

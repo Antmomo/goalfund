@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import type { Messenger, PublicMessenger, Shipment } from "../../src/lib/types";
+import { messengerStatus, type Messenger, type PublicMessenger, type Shipment } from "../../src/lib/types";
 
 const store = (name: string) => getStore({ name, consistency: "strong" });
 
@@ -34,6 +34,12 @@ export function toPublic(m: Messenger): PublicMessenger {
     displayName: `${m.firstName} ${m.lastName.charAt(0).toUpperCase()}.`,
     flight: m.flight,
     availableKg: m.availableKg,
-    verified: m.verified,
+    verified: messengerStatus(m) === "verificato",
   };
+}
+
+export async function listAll<T>(target: ReturnType<typeof store>): Promise<T[]> {
+  const { blobs } = await target.list();
+  const items = (await Promise.all(blobs.map((b) => target.get(b.key, { type: "json" })))) as (T | null)[];
+  return items.filter((x): x is T => !!x);
 }
