@@ -167,6 +167,11 @@ export function regionOfCountry(country: string): Region | undefined {
   return undefined;
 }
 
+/** Pagina pubblica di Flightradar24 per seguire il volo in tempo reale (es. MS 791 → /data/flights/ms791). */
+export function flightTrackerUrl(flightNumber: string): string {
+  return `https://www.flightradar24.com/data/flights/${normalizeFlightNumber(flightNumber).toLowerCase()}`;
+}
+
 export function normalizeFlightNumber(value: string | undefined): string {
   return (value ?? "").replace(/\s+/g, "").toUpperCase();
 }

@@ -272,6 +272,7 @@ export const it = {
     messengersTitle: "Messenger in partenza",
     messengersTo: (city: string) => `Messenger in partenza per ${city}`,
     noMessengers: "Nessun Messenger registrato per questo giorno. Prova un'altra data o",
+    track: "📡 Segui in tempo reale",
     upcoming: "Prossimi Messenger disponibili",
     upcomingHint: "Nessun Messenger per questo giorno, ma ecco quelli dei prossimi giorni sulla stessa tratta:",
     becomeMessenger: "diventa tu un Messenger",

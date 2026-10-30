@@ -195,6 +195,7 @@ export const es: Dict = {
     messengersTitle: "Messengers que salen",
     messengersTo: (city) => `Messengers que vuelan a ${city}`,
     noMessengers: "No hay Messengers registrados para este día. Prueba otra fecha o",
+    track: "📡 Seguir en directo",
     upcoming: "Próximos Messengers disponibles",
     upcomingHint: "No hay Messengers este día, pero estos vuelan en los próximos días por el mismo trayecto:",
     becomeMessenger: "hazte tú Messenger",

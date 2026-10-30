@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import AirportSelect from "../components/AirportSelect";
+import TrackFlight from "../components/TrackFlight";
 import { errorText, useI18n } from "../i18n";
 import { api } from "../lib/api";
 import { getAirport, normalizeFlightNumber, oppositeRegion } from "../lib/catalog";
@@ -192,8 +193,12 @@ export default function FlightsPage() {
                         <td className="mono" dir="ltr">
                           {f.departureLocal.slice(11, 16)}
                         </td>
-                        <td className="mono" dir="ltr">
-                          {f.flightNumber}
+                        <td>
+                          <span className="mono" dir="ltr">
+                            {f.flightNumber}
+                          </span>
+                          <br />
+                          <TrackFlight flightNumber={f.flightNumber} />
                         </td>
                         <td>{f.airline}</td>
                         <td>
@@ -250,7 +255,9 @@ export default function FlightsPage() {
                   </div>
                   <div>
                     <dt>{ft.flight}</dt>
-                    <dd dir="ltr">{m.flight.flightNumber ?? "—"}</dd>
+                    <dd>
+                      <span dir="ltr">{m.flight.flightNumber ?? "—"}</span> <TrackFlight flightNumber={m.flight.flightNumber} />
+                    </dd>
                   </div>
                   <div>
                     <dt>{ft.space}</dt>

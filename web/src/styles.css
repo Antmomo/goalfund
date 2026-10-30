@@ -1222,3 +1222,14 @@ table.flights {
 .link-btn.danger {
   color: var(--error);
 }
+
+.track-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.track-link:hover {
+  text-decoration: underline;
+}

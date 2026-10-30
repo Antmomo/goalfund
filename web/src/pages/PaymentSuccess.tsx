@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import TrackFlight from "../components/TrackFlight";
 import { errorText, useI18n } from "../i18n";
 import { api } from "../lib/api";
 import { clearShipment } from "../lib/session";
@@ -72,7 +73,8 @@ export default function PaymentSuccess() {
           </h2>
           <p className="muted">
             {s.flight} <span dir="ltr">{messenger.flight.flightNumber ?? ""}</span> {fmt.airport(messenger.flight.from)}{" "}
-            {t.arrow} {fmt.airport(messenger.flight.to)} · {fmt.date(messenger.flight.date)}
+            {t.arrow} {fmt.airport(messenger.flight.to)} · {fmt.date(messenger.flight.date)}{" "}
+            <TrackFlight flightNumber={messenger.flight.flightNumber} />
           </p>
           <div className="contact-actions">
             <a className="btn btn-primary" href={`tel:${messenger.phone}`} dir="ltr">
