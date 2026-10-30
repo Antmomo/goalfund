@@ -2,7 +2,7 @@ import type { Config } from "@netlify/functions";
 import { messengerStatus, type AdminMessenger, type Messenger, type MessengerStatus } from "../../src/lib/types";
 import { requireAdmin } from "../lib/auth";
 import { fail, json } from "../lib/http";
-import { getMessenger, listAll, messengers } from "../lib/store";
+import { deleteFiles, getMessenger, listAll, messengerDocuments, messengers } from "../lib/store";
 
 async function list(): Promise<Response> {
   const all = await listAll<Messenger>(messengers());
@@ -30,11 +30,21 @@ async function review(req: Request): Promise<Response> {
   return json({ messenger: { ...messenger, status } satisfies AdminMessenger });
 }
 
+/** Elimina definitivamente un Messenger e i suoi documenti (per i dati di prova). */
+async function remove(url: URL): Promise<Response> {
+  const messenger = await getMessenger(url.searchParams.get("id") ?? "");
+  if (!messenger) return fail("messengerNotFound", 404);
+  await deleteFiles(messengerDocuments(), messenger.documentKeys);
+  await messengers().delete(messenger.id);
+  return json({ deleted: messenger.id });
+}
+
 export default async (req: Request) => {
   const denied = requireAdmin(req);
   if (denied) return denied;
   if (req.method === "GET") return list();
   if (req.method === "POST") return review(req);
+  if (req.method === "DELETE") return remove(new URL(req.url));
   return fail("methodNotAllowed", 405);
 };
 

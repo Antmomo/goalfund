@@ -128,6 +128,27 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
     }
   }
 
+  async function removeMessenger(m: AdminMessenger) {
+    if (!window.confirm(`Eliminare definitivamente ${m.firstName} ${m.lastName} e i suoi documenti? L'operazione non si può annullare.`)) return;
+    try {
+      await adminApi.deleteMessenger(token, m.id);
+      await load();
+    } catch (err) {
+      handle(err);
+    }
+  }
+
+  async function removeShipment(s: AdminShipment) {
+    const warning = s.status === "pagata" ? "\n\nATTENZIONE: questa spedizione risulta PAGATA. Il pagamento resta su Stripe." : "";
+    if (!window.confirm(`Eliminare definitivamente la spedizione "${s.goodsType}" e le sue foto?${warning}`)) return;
+    try {
+      await adminApi.deleteShipment(token, s.id);
+      await load();
+    } catch (err) {
+      handle(err);
+    }
+  }
+
   const visible = filter === "tutti" ? messengers : messengers.filter((m) => m.status === filter);
   const count = (s: MessengerStatus) => messengers.filter((m) => m.status === s).length;
 
@@ -187,7 +208,7 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
             {visible.length === 0 && <p className="empty card">Nessun Messenger in questa sezione.</p>}
             <div className="admin-list">
               {visible.map((m) => (
-                <MessengerRow key={m.id} m={m} token={token} onReview={review} />
+                <MessengerRow key={m.id} m={m} token={token} onReview={review} onDelete={removeMessenger} />
               ))}
             </div>
           </>
@@ -197,7 +218,7 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
           <div className="admin-list">
             {shipments.length === 0 && <p className="empty card">Nessuna spedizione registrata.</p>}
             {shipments.map((s) => (
-              <ShipmentRow key={s.id} s={s} token={token} />
+              <ShipmentRow key={s.id} s={s} token={token} onDelete={removeShipment} />
             ))}
           </div>
         )}
@@ -220,10 +241,12 @@ function MessengerRow({
   m,
   token,
   onReview,
+  onDelete,
 }: {
   m: AdminMessenger;
   token: string;
   onReview: (m: AdminMessenger, action: "approve" | "reject" | "reset") => void;
+  onDelete: (m: AdminMessenger) => void;
 }) {
   return (
     <article className="card admin-row">
@@ -251,6 +274,9 @@ function MessengerRow({
               Rimetti in verifica
             </button>
           )}
+          <button className="link-btn danger" onClick={() => onDelete(m)}>
+            🗑 Elimina
+          </button>
         </div>
       </div>
 
@@ -302,7 +328,7 @@ function MessengerRow({
   );
 }
 
-function ShipmentRow({ s, token }: { s: AdminShipment; token: string }) {
+function ShipmentRow({ s, token, onDelete }: { s: AdminShipment; token: string; onDelete: (s: AdminShipment) => void }) {
   const [open, setOpen] = useState(false);
   const tier = getTier(s.tierId);
   const categories = s.categories.map((c) => CATEGORIES.find((k) => k.id === c)?.emoji ?? "").join(" ");
@@ -323,9 +349,14 @@ function ShipmentRow({ s, token }: { s: AdminShipment; token: string }) {
             {s.arrivalAirport && ` → ${airportName(s.arrivalAirport)}`} · {formatDateTime(s.createdAt)}
           </span>
         </div>
-        <button className="link-btn" onClick={() => setOpen(!open)}>
-          {open ? "Chiudi" : "Dettagli e foto"}
-        </button>
+        <div className="admin-actions">
+          <button className="link-btn" onClick={() => setOpen(!open)}>
+            {open ? "Chiudi" : "Dettagli e foto"}
+          </button>
+          <button className="link-btn danger" onClick={() => onDelete(s)}>
+            🗑 Elimina
+          </button>
+        </div>
       </div>
 
       {open && (

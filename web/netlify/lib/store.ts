@@ -28,6 +28,10 @@ export async function saveFiles(target: ReturnType<typeof store>, prefix: string
   );
 }
 
+export async function deleteFiles(target: ReturnType<typeof store>, keys: string[]): Promise<void> {
+  await Promise.all(keys.map((key) => target.delete(key)));
+}
+
 export function toPublic(m: Messenger): PublicMessenger {
   return {
     id: m.id,

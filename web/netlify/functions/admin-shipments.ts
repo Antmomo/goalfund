@@ -3,11 +3,21 @@ import { feeVat, getTier } from "../../src/lib/pricing";
 import { messengerStatus, type AdminShipment, type AdminStats, type Messenger, type Shipment } from "../../src/lib/types";
 import { requireAdmin } from "../lib/auth";
 import { fail, json } from "../lib/http";
-import { listAll, messengers, shipments } from "../lib/store";
+import { deleteFiles, getShipment, listAll, messengers, shipmentPhotos, shipments } from "../lib/store";
+
+/** Elimina definitivamente una spedizione e le sue foto (per i dati di prova). */
+async function remove(url: URL): Promise<Response> {
+  const shipment = await getShipment(url.searchParams.get("id") ?? "");
+  if (!shipment) return fail("shipmentNotFound", 404);
+  await deleteFiles(shipmentPhotos(), shipment.photoKeys);
+  await shipments().delete(shipment.id);
+  return json({ deleted: shipment.id });
+}
 
 export default async (req: Request) => {
   const denied = requireAdmin(req);
   if (denied) return denied;
+  if (req.method === "DELETE") return remove(new URL(req.url));
   if (req.method !== "GET") return fail("methodNotAllowed", 405);
 
   const [allShipments, allMessengers] = await Promise.all([

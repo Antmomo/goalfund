@@ -1218,3 +1218,7 @@ table.flights {
   color: var(--muted);
   font-size: 0.82rem;
 }
+
+.link-btn.danger {
+  color: var(--error);
+}
