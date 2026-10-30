@@ -155,6 +155,7 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
             <Stat label="Messenger verificati" value={String(stats.messengersVerified)} />
             <Stat label="Spedizioni pagate" value={String(stats.shipmentsPaid)} sub={`${stats.shipmentsWaiting} in attesa`} />
             <Stat label="Incassato" value={formatEur(stats.revenueTotal)} sub={`${formatEur(stats.platformFees)} commissioni`} />
+            <Stat label="IVA da versare (22%)" value={formatEur(stats.vatDue)} sub={`${formatEur(stats.platformFeesNet)} commissioni nette`} />
             <Stat label="Da pagare ai Messenger" value={formatEur(stats.messengerPayouts)} />
           </div>
         )}

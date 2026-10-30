@@ -1,5 +1,5 @@
 import { useI18n } from "../i18n";
-import { WEIGHT_TIERS } from "../lib/pricing";
+import { VAT_RATE, WEIGHT_TIERS, feeVat } from "../lib/pricing";
 
 export default function PricingTable() {
   const { t, fmt } = useI18n();
@@ -17,6 +17,9 @@ export default function PricingTable() {
             </li>
             <li>
               <span>{t.pricing.platformFee}</span> <strong>{fmt.eur(tier.platformFee)}</strong>
+            </li>
+            <li className="vat-row">
+              <span>{t.pricing.vat(VAT_RATE * 100)}</span> <span>{fmt.eur(feeVat(tier.platformFee).vat)}</span>
             </li>
           </ul>
         </div>

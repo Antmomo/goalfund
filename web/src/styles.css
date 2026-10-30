@@ -1213,3 +1213,8 @@ table.flights {
 .form .route {
   margin-bottom: 4px;
 }
+
+.price-card .vat-row {
+  color: var(--muted);
+  font-size: 0.82rem;
+}

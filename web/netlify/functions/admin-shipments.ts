@@ -1,5 +1,5 @@
 import type { Config } from "@netlify/functions";
-import { getTier } from "../../src/lib/pricing";
+import { feeVat, getTier } from "../../src/lib/pricing";
 import { messengerStatus, type AdminShipment, type AdminStats, type Messenger, type Shipment } from "../../src/lib/types";
 import { requireAdmin } from "../lib/auth";
 import { fail, json } from "../lib/http";
@@ -24,8 +24,9 @@ export default async (req: Request) => {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const paid = allShipments.filter((s) => s.status === "pagata");
+  // Somma in centesimi per evitare errori di arrotondamento.
   const sum = (pick: (t: NonNullable<ReturnType<typeof getTier>>) => number) =>
-    paid.reduce((acc, s) => acc + (getTier(s.tierId) ? pick(getTier(s.tierId)!) : 0), 0);
+    paid.reduce((acc, s) => acc + (getTier(s.tierId) ? Math.round(pick(getTier(s.tierId)!) * 100) : 0), 0) / 100;
 
   const stats: AdminStats = {
     messengersPending: allMessengers.filter((m) => messengerStatus(m) === "in_verifica").length,
@@ -34,6 +35,8 @@ export default async (req: Request) => {
     shipmentsPaid: paid.length,
     revenueTotal: sum((t) => t.total),
     platformFees: sum((t) => t.platformFee),
+    platformFeesNet: sum((t) => feeVat(t.platformFee).net),
+    vatDue: sum((t) => feeVat(t.platformFee).vat),
     messengerPayouts: sum((t) => t.messengerShare),
   };
 

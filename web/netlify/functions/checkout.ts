@@ -2,7 +2,7 @@ import type { Config } from "@netlify/functions";
 import type Stripe from "stripe";
 import { getDict } from "../../src/i18n/dicts";
 import { getAirport } from "../../src/lib/catalog";
-import { getTier } from "../../src/lib/pricing";
+import { VAT_RATE, feeVat, getTier } from "../../src/lib/pricing";
 import { messengerStatus } from "../../src/lib/types";
 import { fail, json, todayIso } from "../lib/http";
 import { getMessenger, getShipment } from "../lib/store";
@@ -70,6 +70,9 @@ export default async (req: Request) => {
       tierId: tier.id,
       messengerShare: String(tier.messengerShare),
       platformFee: String(tier.platformFee),
+      platformFeeNet: String(feeVat(tier.platformFee).net),
+      platformFeeVat: String(feeVat(tier.platformFee).vat),
+      vatRate: String(VAT_RATE),
     },
     success_url: `${origin}/pagamento/successo?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/voli?pagamento=annullato`,

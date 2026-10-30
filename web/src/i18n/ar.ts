@@ -110,7 +110,7 @@ export const ar: Dict = {
       ["💳", "دفع آمن", "الدفع يتم عبر Stripe: الموقع لا يرى بيانات بطاقتك أبدًا."],
     ],
   },
-  pricing: { toMessenger: "للمسافر", platformFee: "عمولة الموقع" },
+  pricing: { toMessenger: "للمسافر", platformFee: "عمولة الموقع", vat: (rate) => `منها ضريبة القيمة المضافة ${rate}٪` },
   categories: {
     documenti: "مستندات",
     vestiti: "ملابس",

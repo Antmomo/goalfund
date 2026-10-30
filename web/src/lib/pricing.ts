@@ -19,6 +19,16 @@ export const WEIGHT_TIERS: WeightTier[] = [
   { id: "20-25", label: "20 – 25 kg", minKg: 20, maxKg: 25, total: 29.99, messengerShare: 15, platformFee: 14.99 },
 ];
 
+/** Aliquota IVA italiana ordinaria, già inclusa nella commissione del sito. */
+export const VAT_RATE = 0.22;
+
+/** Scorpora l'IVA dalla commissione del sito: imponibile + IVA = commissione, al centesimo. */
+export function feeVat(platformFee: number): { net: number; vat: number } {
+  const grossCents = Math.round(platformFee * 100);
+  const netCents = Math.round(grossCents / (1 + VAT_RATE));
+  return { net: netCents / 100, vat: (grossCents - netCents) / 100 };
+}
+
 export function getTier(id: string | null | undefined): WeightTier | undefined {
   return WEIGHT_TIERS.find((t) => t.id === id);
 }

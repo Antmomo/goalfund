@@ -7,7 +7,7 @@ import { errorText, useI18n } from "../i18n";
 import { api } from "../lib/api";
 import { CATEGORIES } from "../lib/catalog";
 import { compressImage } from "../lib/image";
-import { WEIGHT_TIERS, getTier } from "../lib/pricing";
+import { VAT_RATE, WEIGHT_TIERS, feeVat, getTier } from "../lib/pricing";
 import { saveShipment } from "../lib/session";
 
 export default function SendPage() {
@@ -152,7 +152,10 @@ export default function SendPage() {
               <span>{s.total}</span>
               <strong>{fmt.eur(tier.total)}</strong>
             </div>
-            <small>{s.split(fmt.eur(tier.messengerShare), fmt.eur(tier.platformFee))}</small>
+            <small>
+              {s.split(fmt.eur(tier.messengerShare), fmt.eur(tier.platformFee))}{" "}
+              ({t.pricing.platformFee}: {t.pricing.vat(VAT_RATE * 100)} {fmt.eur(feeVat(tier.platformFee).vat)})
+            </small>
           </div>
 
           <ConsentFields role="cliente" />

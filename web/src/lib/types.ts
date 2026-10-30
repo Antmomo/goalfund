@@ -102,5 +102,9 @@ export type AdminStats = {
   shipmentsPaid: number;
   revenueTotal: number;
   platformFees: number;
+  /** Commissioni al netto dell'IVA. */
+  platformFeesNet: number;
+  /** IVA contenuta nelle commissioni, da versare. */
+  vatDue: number;
   messengerPayouts: number;
 };

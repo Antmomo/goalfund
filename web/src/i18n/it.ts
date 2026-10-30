@@ -182,7 +182,7 @@ export const it = {
       ["💳", "Pagamento sicuro", "I pagamenti passano da Stripe: il sito non vede mai i dati della tua carta."],
     ],
   },
-  pricing: { toMessenger: "Al Messenger", platformFee: "Commissione sito" },
+  pricing: { toMessenger: "Al Messenger", platformFee: "Commissione sito", vat: (rate: number) => `di cui IVA ${rate}%` },
   categories: {
     documenti: "Documenti",
     vestiti: "Vestiti",

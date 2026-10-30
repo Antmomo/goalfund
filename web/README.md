@@ -30,6 +30,10 @@ dal menu in alto, viene ricordata nel browser e all'inizio segue quella del disp
 | 15–20 kg | 24,99 € | 12,50 €   | 12,49 € |
 | 20–25 kg | 29,99 € | 15 €      | 14,99 € |
 
+La commissione del sito è IVA inclusa (22%, `VAT_RATE`). `feeVat()` la scorpora al centesimo:
+0,90 € · 1,62 € · 2,25 € · 2,70 € di IVA per fascia. Imponibile e IVA sono salvati nei metadati
+di ogni pagamento Stripe e sommati nel pannello admin ("IVA da versare").
+
 ## Traduzioni
 
 I testi sono in `src/i18n/` (un file per lingua). `it.ts` è il riferimento: TypeScript segnala ogni testo

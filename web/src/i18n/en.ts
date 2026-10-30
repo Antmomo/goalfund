@@ -110,7 +110,7 @@ export const en: Dict = {
       ["💳", "Secure payment", "Payments go through Stripe: we never see your card details."],
     ],
   },
-  pricing: { toMessenger: "To the Messenger", platformFee: "Platform fee" },
+  pricing: { toMessenger: "To the Messenger", platformFee: "Platform fee", vat: (rate) => `incl. VAT ${rate}%` },
   categories: {
     documenti: "Documents",
     vestiti: "Clothes",
