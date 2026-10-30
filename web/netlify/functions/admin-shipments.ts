@@ -3,7 +3,8 @@ import { feeVat, getTier } from "../../src/lib/pricing";
 import { messengerStatus, type AdminShipment, type AdminStats, type Messenger, type Shipment } from "../../src/lib/types";
 import { requireAdmin } from "../lib/auth";
 import { fail, json } from "../lib/http";
-import { deleteFiles, getShipment, listAll, messengers, shipmentPhotos, shipments } from "../lib/store";
+import { sendOrderEmails } from "../lib/order";
+import { deleteFiles, getMessenger, getShipment, listAll, messengers, shipmentPhotos, shipments } from "../lib/store";
 
 /** Elimina definitivamente una spedizione e le sue foto (per i dati di prova). */
 async function remove(url: URL): Promise<Response> {
@@ -14,14 +15,26 @@ async function remove(url: URL): Promise<Response> {
   return json({ deleted: shipment.id });
 }
 
-/** Segna come pagata la quota del Messenger dopo la consegna confermata. */
-async function markPaidOut(req: Request): Promise<Response> {
-  const { id } = (await req.json().catch(() => ({}))) as { id?: string };
+/** Azioni dell'admin su un ordine pagato: segnare la quota del Messenger come pagata o reinviare le email. */
+async function action(req: Request): Promise<Response> {
+  const { id, action } = (await req.json().catch(() => ({}))) as { id?: string; action?: string };
   const shipment = await getShipment(id ?? "");
-  if (!shipment) return fail("shipmentNotFound", 404);
-  if (shipment.order?.payout !== "da_pagare") return fail("stepNotAllowed", 409);
-  shipment.order.payout = "pagato";
-  shipment.order.payoutPaidAt = new Date().toISOString();
+  if (!shipment?.order) return fail("shipmentNotFound", 404);
+
+  if (action === "payoutPaid") {
+    if (shipment.order.payout !== "da_pagare") return fail("stepNotAllowed", 409);
+    shipment.order.payout = "pagato";
+    shipment.order.payoutPaidAt = new Date().toISOString();
+  } else if (action === "resendEmails") {
+    const messenger = await getMessenger(shipment.messengerId ?? "");
+    if (!messenger) return fail("messengerNotFound", 404);
+    const baseUrl = process.env.URL ?? new URL(req.url).origin;
+    if (!(await sendOrderEmails(shipment, messenger, baseUrl).catch(() => false))) return fail("serverError", 502);
+    shipment.order.emailsSentAt = new Date().toISOString();
+  } else {
+    return fail("invalidRequest");
+  }
+
   await shipments().setJSON(shipment.id, shipment);
   return json({ ok: true });
 }
@@ -30,7 +43,7 @@ export default async (req: Request) => {
   const denied = requireAdmin(req);
   if (denied) return denied;
   if (req.method === "DELETE") return remove(new URL(req.url));
-  if (req.method === "POST") return markPaidOut(req);
+  if (req.method === "POST") return action(req);
   if (req.method !== "GET") return fail("methodNotAllowed", 405);
 
   const [allShipments, allMessengers] = await Promise.all([

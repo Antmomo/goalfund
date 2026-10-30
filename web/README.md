@@ -58,7 +58,7 @@ Il pannello admin resta in italiano. Aeroporti e nomi delle città sono in `src/
 ## Variabili d'ambiente
 
 Vedi `.env.example`: `STRIPE_SECRET_KEY` (obbligatoria per i pagamenti), `ADMIN_PASSWORD` (obbligatoria per
-`/admin`), `RESEND_API_KEY` e `EMAIL_FROM` (email degli ordini), `ADMIN_SESSION_SECRET` e
+`/admin`), `SMTP_USER` e `SMTP_PASS` (email degli ordini via Gmail) oppure `RESEND_API_KEY` ed `EMAIL_FROM`, `ADMIN_SESSION_SECRET` e
 `AERODATABOX_API_KEY` (facoltative).
 
 ## Sviluppo locale

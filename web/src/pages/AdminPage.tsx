@@ -152,10 +152,21 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
   async function markPaidOut(s: AdminShipment) {
     if (!window.confirm(`Confermi di aver pagato al Messenger ${s.messengerName ?? ""} la sua quota?`)) return;
     try {
-      await adminApi.markPaidOut(token, s.id);
+      await adminApi.orderAction(token, s.id, "payoutPaid");
       await load();
     } catch (err) {
       handle(err);
+    }
+  }
+
+  async function resendEmails(s: AdminShipment) {
+    try {
+      await adminApi.orderAction(token, s.id, "resendEmails");
+      window.alert("Email inviate al cliente e al Messenger.");
+      await load();
+    } catch (err) {
+      if (err instanceof UnauthorizedError) handle(err);
+      else window.alert("Invio non riuscito: controlla SMTP_USER e SMTP_PASS su Netlify.");
     }
   }
 
@@ -244,7 +255,7 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
           <div className="admin-list">
             {shipments.length === 0 && <p className="empty card">Nessuna spedizione registrata.</p>}
             {shipments.map((s) => (
-              <ShipmentRow key={s.id} s={s} token={token} onDelete={removeShipment} onPaidOut={markPaidOut} />
+              <ShipmentRow key={s.id} s={s} token={token} onDelete={removeShipment} onPaidOut={markPaidOut} onResend={resendEmails} />
             ))}
           </div>
         )}
@@ -359,11 +370,13 @@ function ShipmentRow({
   token,
   onDelete,
   onPaidOut,
+  onResend,
 }: {
   s: AdminShipment;
   token: string;
   onDelete: (s: AdminShipment) => void;
   onPaidOut: (s: AdminShipment) => void;
+  onResend: (s: AdminShipment) => void;
 }) {
   const origin = window.location.origin;
   const [open, setOpen] = useState(false);
@@ -453,7 +466,12 @@ function ShipmentRow({
                 </div>
                 <div>
                   <dt>Email</dt>
-                  <dd>{s.order.emailsSentAt ? `inviate ${formatDateTime(s.order.emailsSentAt)}` : "non inviate (Resend non configurato)"}</dd>
+                  <dd>
+                    {s.order.emailsSentAt ? `inviate ${formatDateTime(s.order.emailsSentAt)}` : "non inviate"}{" "}
+                    <button className="btn btn-outline btn-sm" onClick={() => onResend(s)}>
+                      ✉️ {s.order.emailsSentAt ? "Reinvia email" : "Invia email"}
+                    </button>
+                  </dd>
                 </div>
                 <div>
                   <dt>Link cliente</dt>
