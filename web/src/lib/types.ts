@@ -22,6 +22,8 @@ export type Shipment = {
   description: string;
   tierId: string;
   departureAirport: string;
+  /** Assente nelle spedizioni registrate prima delle tratte Africa ⇄ Europa. */
+  arrivalAirport?: string;
   photoKeys: string[];
   terms?: TermsAcceptance;
   messengerId?: string;
@@ -63,6 +65,7 @@ export type Flight = {
   airline: string;
   from: string;
   to: string;
+  /** Nome fornito dall'API voli, usato se l'aeroporto non è nel catalogo. */
   toName: string;
   departureLocal: string;
   status?: string;
@@ -70,7 +73,7 @@ export type Flight = {
 
 export type FlightsResponse = {
   source: "live" | "demo";
-  notice?: string;
+  notice?: "demo" | "liveUnavailable" | "demoMissing";
   flights: Flight[];
 };
 
@@ -79,6 +82,7 @@ export type ShipmentSummary = {
   id: string;
   tierId: string;
   departureAirport: string;
+  arrivalAirport?: string;
   goodsType: string;
 };
 

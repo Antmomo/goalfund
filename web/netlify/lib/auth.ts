@@ -41,8 +41,8 @@ function validToken(token: string): boolean {
 
 /** Restituisce una risposta di errore se la richiesta non è autorizzata, altrimenti null. */
 export function requireAdmin(req: Request): Response | null {
-  if (!adminConfigured()) return fail("Pannello admin non configurato (manca ADMIN_PASSWORD).", 503);
+  if (!adminConfigured()) return fail("adminNotConfigured", 503);
   const header = req.headers.get("Authorization") ?? "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-  return validToken(token) ? null : fail("Sessione scaduta: accedi di nuovo.", 401);
+  return validToken(token) ? null : fail("sessionExpired", 401);
 }

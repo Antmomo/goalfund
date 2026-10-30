@@ -8,7 +8,7 @@ import { listAll, messengers, shipments } from "../lib/store";
 export default async (req: Request) => {
   const denied = requireAdmin(req);
   if (denied) return denied;
-  if (req.method !== "GET") return fail("Metodo non consentito.", 405);
+  if (req.method !== "GET") return fail("methodNotAllowed", 405);
 
   const [allShipments, allMessengers] = await Promise.all([
     listAll<Shipment>(shipments()),

@@ -1,20 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import AirportSelect from "../components/AirportSelect";
+import { errorText, useI18n } from "../i18n";
 import { api } from "../lib/api";
-import { DEPARTURE_AIRPORTS, europeAirportCity, normalizeFlightNumber } from "../lib/catalog";
-import { formatEur, getTier } from "../lib/pricing";
-import { formatDate, loadShipment, tomorrowIso } from "../lib/session";
-import { DISCLAIMER_SHORT } from "../lib/terms";
-import type { FlightsResponse, PublicMessenger } from "../lib/types";
+import { getAirport, normalizeFlightNumber, oppositeRegion } from "../lib/catalog";
+import { getTier } from "../lib/pricing";
+import { loadShipment, tomorrowIso } from "../lib/session";
+import type { Flight, FlightsResponse, PublicMessenger } from "../lib/types";
+
+const NOTICE_KEY = { demo: "demoNotice", liveUnavailable: "liveUnavailable", demoMissing: "demoMissing" } as const;
 
 export default function FlightsPage() {
+  const { t, fmt, lang } = useI18n();
+  const ft = t.flights;
   const [params, setParams] = useSearchParams();
   const shipment = useMemo(loadShipment, []);
   const tier = getTier(shipment?.tierId);
 
   const from = params.get("from") ?? shipment?.departureAirport ?? "CAI";
+  const to = params.get("to") ?? shipment?.arrivalAirport ?? "";
   const date = params.get("date") ?? tomorrowIso();
-  const [destination, setDestination] = useState<string | null>(null);
+  const fromRegion = getAirport(from)?.region ?? "africa";
+  const toCountry = getAirport(to)?.country;
 
   const [flights, setFlights] = useState<FlightsResponse | null>(null);
   const [messengers, setMessengers] = useState<PublicMessenger[]>([]);
@@ -22,12 +29,16 @@ export default function FlightsPage() {
   const [error, setError] = useState("");
   const [paying, setPaying] = useState<string | null>(null);
 
-  const update = (key: string, value: string) => {
+  const update = (changes: Record<string, string>) => {
     const next = new URLSearchParams(params);
-    next.set(key, value);
+    Object.entries(changes).forEach(([k, v]) => next.set(k, v));
     next.delete("pagamento");
     setParams(next, { replace: true });
-    setDestination(null);
+  };
+
+  const changeFrom = (next: string) => {
+    const keepTo = getAirport(to)?.region === oppositeRegion(getAirport(next)?.region ?? "africa");
+    update({ from: next, to: keepTo ? to : "" });
   };
 
   useEffect(() => {
@@ -40,31 +51,47 @@ export default function FlightsPage() {
         setFlights(f);
         setMessengers(m.messengers);
       })
-      .catch((err: Error) => !cancelled && setError(err.message))
+      .catch((err) => !cancelled && setError(errorText(err, t)))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
+    // t cambia solo con la lingua: non serve ricaricare i dati
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from, date]);
 
-  const countFor = (flightNumber: string, to: string) =>
+  const matchesDestination = (iata: string) => !toCountry || getAirport(iata)?.country === toCountry;
+  const visibleFlights = (flights?.flights ?? []).filter((f) => matchesDestination(f.to));
+  const visibleMessengers = messengers.filter((m) => matchesDestination(m.flight.to));
+
+  const destinationName = (f: Flight) => (getAirport(f.to) ? fmt.airport(f.to) : f.toName);
+  const countFor = (f: Flight) =>
     messengers.filter((m) =>
       m.flight.flightNumber
-        ? normalizeFlightNumber(m.flight.flightNumber) === normalizeFlightNumber(flightNumber)
-        : m.flight.to === to,
+        ? normalizeFlightNumber(m.flight.flightNumber) === normalizeFlightNumber(f.flightNumber)
+        : m.flight.to === f.to,
     ).length;
 
-  const visibleMessengers = destination ? messengers.filter((m) => m.flight.to === destination) : messengers;
+  /** Motivo per cui il Messenger non può portare questa spedizione, oppure null. */
+  function blocker(m: PublicMessenger): string | null {
+    if (!shipment || !tier) return null;
+    if (m.flight.from !== shipment.departureAirport) return t.errors.airportMismatch({});
+    if (shipment.arrivalAirport && getAirport(m.flight.to)?.country !== getAirport(shipment.arrivalAirport)?.country) {
+      return t.errors.destinationMismatch({});
+    }
+    if (m.availableKg < tier.maxKg) return ft.notEnoughSpace;
+    return null;
+  }
 
   async function choose(m: PublicMessenger) {
     if (!shipment) return;
     setPaying(m.id);
     setError("");
     try {
-      const { url } = await api.checkout(shipment.id, m.id);
+      const { url } = await api.checkout(shipment.id, m.id, lang);
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Pagamento non avviato.");
+      setError(errorText(err, t));
       setPaying(null);
     }
   }
@@ -72,86 +99,103 @@ export default function FlightsPage() {
   return (
     <section className="section">
       <div className="container">
-        <p className="eyebrow dark">Passo 2 di 3</p>
-        <h1 className="page-title">Voli dall'Egitto verso l'Europa</h1>
+        <p className="eyebrow dark">{ft.step}</p>
+        <h1 className="page-title">{ft.title}</h1>
 
-        {params.get("pagamento") === "annullato" && (
-          <p className="alert alert-info">Pagamento annullato. Puoi scegliere di nuovo quando vuoi.</p>
-        )}
+        {params.get("pagamento") === "annullato" && <p className="alert alert-info">{ft.cancelled}</p>}
 
         {shipment && tier ? (
           <div className="shipment-banner">
             <span>
-              📦 La tua spedizione: <strong>{shipment.goodsType}</strong> · {tier.label}
+              📦 {ft.yourShipment} <strong>{shipment.goodsType}</strong> · <bdi>{tier.label}</bdi> ·{" "}
+              {fmt.airport(shipment.departureAirport)}
+              {shipment.arrivalAirport && ` ${t.arrow} ${fmt.airport(shipment.arrivalAirport)}`}
             </span>
-            <strong>{formatEur(tier.total)}</strong>
+            <strong>{fmt.eur(tier.total)}</strong>
           </div>
         ) : (
           <div className="shipment-banner muted">
-            <span>Per scegliere un Messenger devi prima registrare la tua spedizione.</span>
+            <span>{ft.needShipment}</span>
             <Link to="/spedisci" className="btn btn-primary btn-sm">
-              Registra spedizione
+              {ft.registerShipment}
             </Link>
           </div>
         )}
 
         <div className="filters card">
-          <div className="segmented">
-            {DEPARTURE_AIRPORTS.map((a) => (
-              <button key={a.iata} className={a.iata === from ? "active" : ""} onClick={() => update("from", a.iata)}>
-                {a.city} <small>{a.iata}</small>
-              </button>
-            ))}
-          </div>
-          <label className="inline">
-            Giorno
-            <input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={(e) => e.target.value && update("date", e.target.value)} />
+          <label>
+            {ft.from}
+            <AirportSelect value={from} onChange={changeFrom} regions={["africa", "europe"]} />
+          </label>
+          <label>
+            <span>
+              {ft.to} <small className="muted">({t.regions[oppositeRegion(fromRegion)]})</small>
+            </span>
+            <AirportSelect
+              value={to}
+              onChange={(next) => update({ to: next })}
+              regions={[oppositeRegion(fromRegion)]}
+              emptyLabel={ft.allDestinations}
+            />
+          </label>
+          <label>
+            {ft.day}
+            <input
+              type="date"
+              value={date}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => e.target.value && update({ date: e.target.value })}
+            />
           </label>
         </div>
 
         {error && <p className="alert alert-error">{error}</p>}
-        {flights?.notice && <p className="alert alert-info">ℹ️ {flights.notice}</p>}
+        {flights?.notice && <p className="alert alert-info">ℹ️ {ft[NOTICE_KEY[flights.notice]]}</p>}
 
         <div className="card table-card">
           <div className="table-head">
-            <h2>Partenze del {formatDate(date)}</h2>
-            {destination && (
-              <button className="link-btn" onClick={() => setDestination(null)}>
-                Mostra tutte le destinazioni
+            <h2>{ft.departuresOf(fmt.date(date))}</h2>
+            {to && (
+              <button className="link-btn" onClick={() => update({ to: "" })}>
+                {ft.showAll}
               </button>
             )}
           </div>
           {loading ? (
-            <p className="empty">Caricamento voli…</p>
-          ) : flights && flights.flights.length > 0 ? (
+            <p className="empty">{ft.loading}</p>
+          ) : visibleFlights.length > 0 ? (
             <div className="table-scroll">
               <table className="flights">
                 <thead>
                   <tr>
-                    <th>Orario</th>
-                    <th>Volo</th>
-                    <th>Compagnia</th>
-                    <th>Destinazione</th>
-                    <th>Messenger</th>
+                    <th>{ft.cols.time}</th>
+                    <th>{ft.cols.flight}</th>
+                    <th>{ft.cols.airline}</th>
+                    <th>{ft.cols.destination}</th>
+                    <th>{ft.cols.messengers}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {flights.flights.map((f) => {
-                    const count = countFor(f.flightNumber, f.to);
+                  {visibleFlights.map((f) => {
+                    const count = countFor(f);
                     return (
                       <tr
                         key={`${f.flightNumber}-${f.departureLocal}`}
-                        className={destination === f.to ? "selected" : ""}
-                        onClick={() => setDestination(f.to)}
+                        className={to === f.to ? "selected" : ""}
+                        onClick={() => getAirport(f.to) && update({ to: f.to })}
                       >
-                        <td className="mono">{f.departureLocal.slice(11, 16)}</td>
-                        <td className="mono">{f.flightNumber}</td>
+                        <td className="mono" dir="ltr">
+                          {f.departureLocal.slice(11, 16)}
+                        </td>
+                        <td className="mono" dir="ltr">
+                          {f.flightNumber}
+                        </td>
                         <td>{f.airline}</td>
                         <td>
-                          {f.toName} <small className="muted">{f.to}</small>
+                          {destinationName(f)} <small className="muted">{f.to}</small>
                         </td>
                         <td>
-                          {count > 0 ? <span className="pill pill-ok">{count} {count === 1 ? "disponibile" : "disponibili"}</span> : <span className="pill">—</span>}
+                          {count > 0 ? <span className="pill pill-ok">{ft.available(count)}</span> : <span className="pill">—</span>}
                         </td>
                       </tr>
                     );
@@ -160,60 +204,60 @@ export default function FlightsPage() {
               </table>
             </div>
           ) : (
-            <p className="empty">Nessun volo trovato per questo giorno.</p>
+            <p className="empty">{ft.none}</p>
           )}
         </div>
 
-        <h2 className="section-title left">
-          Messenger in partenza {destination ? `per ${europeAirportCity(destination) ?? destination}` : ""}
-        </h2>
+        <h2 className="section-title left">{to ? ft.messengersTo(fmt.airport(to)) : ft.messengersTitle}</h2>
         {!loading && visibleMessengers.length === 0 && (
           <p className="empty card">
-            Nessun Messenger registrato per questo giorno. Prova un'altra data o{" "}
-            <Link to="/messenger">diventa tu un Messenger</Link>.
+            {ft.noMessengers} <Link to="/messenger">{ft.becomeMessenger}</Link>.
           </p>
         )}
         <p className="alert alert-info">
-          ⚖️ {DISCLAIMER_SHORT} <Link to="/condizioni">Leggi le condizioni</Link>
+          ⚖️ {t.disclaimer} <Link to="/condizioni">{t.readTerms}</Link>
         </p>
         <div className="messenger-grid">
           {visibleMessengers.map((m) => {
-            const fits = !tier || m.availableKg >= tier.maxKg;
+            const reason = blocker(m);
             return (
               <div key={m.id} className="card messenger-card">
                 <div className="messenger-top">
                   <div className="avatar">{m.displayName.charAt(0)}</div>
                   <div>
                     <strong>{m.displayName}</strong>
-                    <div className={m.verified ? "badge badge-ok" : "badge"}>
-                      {m.verified ? "✓ Verificato" : "🪪 Documento caricato"}
-                    </div>
+                    <div className={m.verified ? "badge badge-ok" : "badge"}>{m.verified ? ft.verified : ft.docUploaded}</div>
                   </div>
                 </div>
                 <dl>
                   <div>
-                    <dt>Tratta</dt>
+                    <dt>{ft.route}</dt>
                     <dd>
-                      {m.flight.from} → {europeAirportCity(m.flight.to) ?? m.flight.to}
+                      {fmt.airport(m.flight.from)} {t.arrow} {fmt.airport(m.flight.to)}
                     </dd>
                   </div>
                   <div>
-                    <dt>Volo</dt>
-                    <dd>{m.flight.flightNumber ?? "—"}</dd>
+                    <dt>{ft.flight}</dt>
+                    <dd dir="ltr">{m.flight.flightNumber ?? "—"}</dd>
                   </div>
                   <div>
-                    <dt>Spazio</dt>
-                    <dd>{m.availableKg} kg</dd>
+                    <dt>{ft.space}</dt>
+                    <dd>
+                      <bdi>{m.availableKg} kg</bdi>
+                    </dd>
                   </div>
                 </dl>
-                <p className="hint">📵 Contatti visibili dopo il pagamento</p>
+                <p className="hint">{ft.contactsAfter}</p>
                 {shipment && tier ? (
-                  <button className="btn btn-primary btn-block" disabled={!fits || paying !== null} onClick={() => choose(m)}>
-                    {paying === m.id ? "Apertura Stripe…" : fits ? `Scegli e paga ${formatEur(tier.total)}` : "Spazio insufficiente"}
-                  </button>
+                  <>
+                    <button className="btn btn-primary btn-block" disabled={!!reason || paying !== null} onClick={() => choose(m)}>
+                      {paying === m.id ? ft.openingStripe : ft.choosePay(fmt.eur(tier.total))}
+                    </button>
+                    {reason && <p className="hint">{reason}</p>}
+                  </>
                 ) : (
                   <Link to="/spedisci" className="btn btn-outline btn-block">
-                    Registra la spedizione
+                    {ft.registerShipment}
                   </Link>
                 )}
               </div>

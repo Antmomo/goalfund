@@ -13,10 +13,10 @@ export default async (req: Request) => {
   const url = new URL(req.url);
   const kind = url.searchParams.get("tipo") as keyof typeof STORES | null;
   const key = url.searchParams.get("key") ?? "";
-  if (!kind || !(kind in STORES) || !/^[0-9a-f-]{36}\/\d+$/.test(key)) return fail("Richiesta non valida.");
+  if (!kind || !(kind in STORES) || !/^[0-9a-f-]{36}\/\d+$/.test(key)) return fail("invalidRequest");
 
   const result = await STORES[kind]().getWithMetadata(key, { type: "arrayBuffer" });
-  if (!result) return fail("File non trovato.", 404);
+  if (!result) return fail("fileNotFound", 404);
 
   return new Response(result.data, {
     headers: {

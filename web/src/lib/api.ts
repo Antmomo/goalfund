@@ -1,3 +1,5 @@
+import { ApiError } from "../i18n";
+import type { ErrParams, ErrorCode } from "../i18n/types";
 import type { FlightsResponse, PublicMessenger, ShipmentSummary } from "./types";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -5,10 +7,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(path, init);
   } catch {
-    throw new Error("Connessione non riuscita. Controlla la rete e riprova.");
+    throw new ApiError("Network error", "network");
   }
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? "Si è verificato un errore.");
+  const data = (await res.json().catch(() => ({}))) as { error?: string; code?: ErrorCode; params?: ErrParams };
+  if (!res.ok) throw new ApiError(data.error ?? `HTTP ${res.status}`, data.code ?? "generic", data.params);
   return data as T;
 }
 
@@ -24,11 +26,11 @@ export const api = {
   flights: (from: string, date: string) =>
     request<FlightsResponse>(`/api/flights?${new URLSearchParams({ from, date })}`),
 
-  checkout: (shipmentId: string, messengerId: string) =>
+  checkout: (shipmentId: string, messengerId: string, lang: string) =>
     request<{ url: string }>("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shipmentId, messengerId }),
+      body: JSON.stringify({ shipmentId, messengerId, lang }),
     }),
 
   confirm: (sessionId: string) =>

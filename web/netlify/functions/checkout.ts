@@ -1,37 +1,52 @@
 import type { Config } from "@netlify/functions";
+import type Stripe from "stripe";
+import { getDict } from "../../src/i18n/dicts";
+import { getAirport } from "../../src/lib/catalog";
 import { getTier } from "../../src/lib/pricing";
-import { DISCLAIMER_SHORT } from "../../src/lib/terms";
 import { messengerStatus } from "../../src/lib/types";
 import { fail, json, todayIso } from "../lib/http";
 import { getMessenger, getShipment } from "../lib/store";
 import { getStripe } from "../lib/stripe";
 
+const STRIPE_LOCALES: Record<string, Stripe.Checkout.SessionCreateParams.Locale> = {
+  it: "it",
+  en: "en",
+  es: "es",
+  fr: "fr",
+  de: "de",
+};
+
 export default async (req: Request) => {
-  if (req.method !== "POST") return fail("Metodo non consentito.", 405);
+  if (req.method !== "POST") return fail("methodNotAllowed", 405);
 
   const stripe = getStripe();
-  if (!stripe) return fail("I pagamenti non sono ancora configurati (manca STRIPE_SECRET_KEY).", 503);
+  if (!stripe) return fail("paymentsNotConfigured", 503);
 
-  const body = (await req.json().catch(() => ({}))) as { shipmentId?: string; messengerId?: string };
-  if (!body.shipmentId || !body.messengerId) return fail("Spedizione o Messenger mancante.");
+  const body = (await req.json().catch(() => ({}))) as { shipmentId?: string; messengerId?: string; lang?: string };
+  if (!body.shipmentId || !body.messengerId) return fail("missingIds");
 
   const [shipment, messenger] = await Promise.all([getShipment(body.shipmentId), getMessenger(body.messengerId)]);
-  if (!shipment) return fail("Spedizione non trovata.", 404);
-  if (!messenger) return fail("Messenger non trovato.", 404);
-  if (messengerStatus(messenger) === "rifiutato") return fail("Questo Messenger non è disponibile.", 409);
-  if (shipment.status === "pagata") return fail("Questa spedizione è già stata pagata.", 409);
+  if (!shipment) return fail("shipmentNotFound", 404);
+  if (!messenger) return fail("messengerNotFound", 404);
+  if (messengerStatus(messenger) === "rifiutato") return fail("messengerUnavailable", 409);
+  if (shipment.status === "pagata") return fail("alreadyPaid", 409);
 
   const tier = getTier(shipment.tierId);
-  if (!tier) return fail("Fascia di peso non valida.", 500);
-  if (messenger.flight.date < todayIso()) return fail("Il volo di questo Messenger è già partito.", 409);
-  if (messenger.flight.from !== shipment.departureAirport) {
-    return fail("Questo Messenger parte da un aeroporto diverso da quello della tua spedizione.", 409);
+  if (!tier) return fail("invalidTier", 500);
+  if (messenger.flight.date < todayIso()) return fail("flightDeparted", 409);
+  if (messenger.flight.from !== shipment.departureAirport) return fail("airportMismatch", 409);
+  if (
+    shipment.arrivalAirport &&
+    getAirport(shipment.arrivalAirport)?.country !== getAirport(messenger.flight.to)?.country
+  ) {
+    return fail("destinationMismatch", 409);
   }
-  if (messenger.availableKg < tier.maxKg) return fail("Il Messenger non ha abbastanza spazio per questa fascia di peso.", 409);
+  if (messenger.availableKg < tier.maxKg) return fail("notEnoughSpace", 409);
 
   const origin = process.env.URL ?? new URL(req.url).origin;
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+    locale: STRIPE_LOCALES[body.lang ?? ""] ?? "auto",
     customer_email: shipment.client.email,
     line_items: [
       {
@@ -40,14 +55,14 @@ export default async (req: Request) => {
           currency: "eur",
           unit_amount: Math.round(tier.total * 100),
           product_data: {
-            name: `Spedizione ${tier.label} · ${messenger.flight.from} → ${messenger.flight.to}`,
-            description: `${shipment.goodsType} · volo del ${messenger.flight.date}`,
+            name: `Amanah · ${tier.label} · ${messenger.flight.from} → ${messenger.flight.to}`,
+            description: `${shipment.goodsType} · ${messenger.flight.date}`,
           },
         },
       },
     ],
     custom_text: {
-      submit: { message: DISCLAIMER_SHORT },
+      submit: { message: getDict(body.lang).disclaimer },
     },
     metadata: {
       shipmentId: shipment.id,

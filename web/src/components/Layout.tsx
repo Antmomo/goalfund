@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { DISCLAIMER_SHORT } from "../lib/terms";
-
-const LINKS = [
-  { to: "/spedisci", label: "Spedisci" },
-  { to: "/voli", label: "Voli & Messenger" },
-  { to: "/messenger", label: "Diventa Messenger" },
-];
+import { useI18n } from "../i18n";
+import LanguageSelect from "./LanguageSelect";
 
 export default function Layout() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     setOpen(false);
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+    if (!location.hash) window.scrollTo(0, 0);
+  }, [location.pathname, location.hash]);
+
+  const links = [
+    { to: "/spedisci", label: t.nav.send },
+    { to: "/voli", label: t.nav.flights },
+    { to: "/messenger", label: t.nav.messenger },
+  ];
 
   return (
     <>
@@ -24,13 +26,16 @@ export default function Layout() {
           <Link to="/" className="brand">
             <span className="brand-mark">✦</span> Amanah
           </Link>
-          <button className="menu-toggle" aria-expanded={open} aria-label="Menu" onClick={() => setOpen(!open)}>
-            <span />
-            <span />
-            <span />
-          </button>
+          <div className="header-right">
+            <LanguageSelect />
+            <button className="menu-toggle" aria-expanded={open} aria-label={t.nav.menu} onClick={() => setOpen(!open)}>
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
           <nav className={open ? "nav open" : "nav"}>
-            {LINKS.map((l) => (
+            {links.map((l) => (
               <NavLink key={l.to} to={l.to}>
                 {l.label}
               </NavLink>
@@ -47,15 +52,15 @@ export default function Layout() {
             <div className="brand light">
               <span className="brand-mark">✦</span> Amanah
             </div>
-            <p>Dal tuo paese a casa tua, con persone di fiducia.</p>
+            <p>{t.footer.tagline}</p>
           </div>
           <p className="muted-light">
-            {DISCLAIMER_SHORT}
+            {t.disclaimer}
             <br />
             <Link to="/condizioni" className="footer-link">
-              Condizioni e responsabilità
+              {t.footer.terms}
             </Link>{" "}
-            · Pagamenti sicuri con Stripe
+            · {t.footer.payments}
             <br />© {new Date().getFullYear()} Amanah
           </p>
         </div>

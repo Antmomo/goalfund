@@ -2,16 +2,21 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConsentFields from "../components/ConsentFields";
 import FilePicker from "../components/FilePicker";
+import RoutePicker from "../components/RoutePicker";
+import { errorText, useI18n } from "../i18n";
 import { api } from "../lib/api";
-import { CATEGORIES, DEPARTURE_AIRPORTS } from "../lib/catalog";
+import { CATEGORIES } from "../lib/catalog";
 import { compressImage } from "../lib/image";
-import { WEIGHT_TIERS, formatEur, getTier } from "../lib/pricing";
+import { WEIGHT_TIERS, getTier } from "../lib/pricing";
 import { saveShipment } from "../lib/session";
 
 export default function SendPage() {
+  const { t, fmt } = useI18n();
+  const s = t.send;
   const navigate = useNavigate();
   const [categories, setCategories] = useState<string[]>([]);
   const [tierId, setTierId] = useState(WEIGHT_TIERS[0].id);
+  const [route, setRoute] = useState({ from: "CAI", to: "FCO" });
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -23,8 +28,8 @@ export default function SendPage() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (categories.length === 0) return setError("Seleziona cosa vuoi spedire.");
-    if (photos.length === 0) return setError("Carica almeno una foto dell'oggetto.");
+    if (categories.length === 0) return setError(t.errors.selectCategories({}));
+    if (photos.length === 0) return setError(t.errors.photoRequired({}));
 
     const form = new FormData(e.currentTarget);
     categories.forEach((c) => form.append("categories", c));
@@ -36,9 +41,9 @@ export default function SendPage() {
       compressed.forEach((p) => form.append("photos", p));
       const summary = await api.createShipment(form);
       saveShipment(summary);
-      navigate(`/voli?from=${summary.departureAirport}`);
+      navigate(`/voli?${new URLSearchParams({ from: summary.departureAirport, to: summary.arrivalAirport ?? "" })}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Si è verificato un errore.");
+      setError(errorText(err, t));
       setSending(false);
     }
   }
@@ -46,118 +51,108 @@ export default function SendPage() {
   return (
     <section className="section">
       <div className="container narrow">
-        <p className="eyebrow dark">Passo 1 di 3</p>
-        <h1 className="page-title">Cosa vuoi farti portare?</h1>
-        <p className="section-sub left">
-          Registrati e descrivi l'oggetto. Subito dopo potrai scegliere il volo e il Messenger.
-        </p>
+        <p className="eyebrow dark">{s.step}</p>
+        <h1 className="page-title">{s.title}</h1>
+        <p className="section-sub left">{s.sub}</p>
 
         <form className="form card" onSubmit={onSubmit}>
           <fieldset>
-            <legend>I tuoi dati</legend>
+            <legend>{s.weightTitle}</legend>
+            <RoutePicker
+              from={route.from}
+              to={route.to}
+              onChange={setRoute}
+              fromLabel={s.fromLabel}
+              toLabel={s.toLabel}
+              names={{ from: "departureAirport", to: "arrivalAirport" }}
+            />
+            <div className="choice-grid tiers">
+              {WEIGHT_TIERS.map((w) => (
+                <label key={w.id} className={w.id === tierId ? "choice selected" : "choice"}>
+                  <input type="radio" name="tier" checked={w.id === tierId} onChange={() => setTierId(w.id)} />
+                  <strong>
+                    <bdi>{w.label}</bdi>
+                  </strong>
+                  <span className="choice-price">{fmt.eur(w.total)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>{s.yourData}</legend>
             <div className="grid-2">
               <label>
-                Nome
+                {t.fields.firstName}
                 <input name="firstName" required autoComplete="given-name" />
               </label>
               <label>
-                Cognome
+                {t.fields.lastName}
                 <input name="lastName" required autoComplete="family-name" />
               </label>
               <label>
-                Età
+                {t.fields.age}
                 <input name="age" type="number" min={18} max={120} required />
               </label>
               <label>
-                Cellulare
-                <input name="phone" type="tel" required autoComplete="tel" placeholder="+39 ..." />
+                {t.fields.phone}
+                <input name="phone" type="tel" required autoComplete="tel" placeholder="+…" dir="ltr" />
               </label>
               <label className="span-2">
-                Email
-                <input name="email" type="email" required autoComplete="email" />
+                {t.fields.email}
+                <input name="email" type="email" required autoComplete="email" dir="ltr" />
               </label>
               <label className="span-2">
-                Indirizzo
-                <input name="address" required autoComplete="street-address" placeholder="Via, numero civico" />
+                {t.fields.address}
+                <input name="address" required autoComplete="street-address" placeholder={s.addressPlaceholder} />
               </label>
               <label>
-                CAP
+                {t.fields.postalCode}
                 <input name="postalCode" required autoComplete="postal-code" />
               </label>
               <label>
-                Città
+                {t.fields.city}
                 <input name="city" required autoComplete="address-level2" />
               </label>
               <label className="span-2">
-                Paese
-                <input name="country" required autoComplete="country-name" defaultValue="Italia" />
+                {t.fields.country}
+                <input name="country" required autoComplete="country-name" defaultValue={s.defaultCountry} />
               </label>
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>Cosa vuoi spedire?</legend>
+            <legend>{s.whatToSend}</legend>
             <div className="choice-grid">
               {CATEGORIES.map((c) => (
                 <label key={c.id} className={categories.includes(c.id) ? "choice selected" : "choice"}>
                   <input type="checkbox" checked={categories.includes(c.id)} onChange={() => toggleCategory(c.id)} />
                   <span className="choice-emoji">{c.emoji}</span>
-                  {c.label}
+                  {t.categories[c.id]}
                 </label>
               ))}
             </div>
             <label>
-              Tipo di merce precisa: quale?
-              <input name="goodsType" required placeholder="Es. certificato di nascita, 2 galabeya, kahk della nonna…" />
+              {s.goodsTypeLabel}
+              <input name="goodsType" required placeholder={s.goodsTypePlaceholder} />
             </label>
             <label>
-              Descrizione precisa dell'oggetto
-              <textarea
-                name="description"
-                required
-                rows={4}
-                placeholder="Dimensioni, quantità, chi lo consegna al Messenger e dove (città/quartiere)…"
-              />
+              {s.descriptionLabel}
+              <textarea name="description" required rows={4} placeholder={s.descriptionPlaceholder} />
             </label>
           </fieldset>
 
           <fieldset>
-            <legend>Foto dell'oggetto</legend>
-            <FilePicker files={photos} onChange={setPhotos} max={10} accept="image/*" hint="massimo 10 foto" />
-          </fieldset>
-
-          <fieldset>
-            <legend>Peso e partenza</legend>
-            <div className="choice-grid tiers">
-              {WEIGHT_TIERS.map((t) => (
-                <label key={t.id} className={t.id === tierId ? "choice selected" : "choice"}>
-                  <input type="radio" name="tier" checked={t.id === tierId} onChange={() => setTierId(t.id)} />
-                  <strong>{t.label}</strong>
-                  <span className="choice-price">{formatEur(t.total)}</span>
-                </label>
-              ))}
-            </div>
-            <label>
-              Da dove parte l'oggetto?
-              <select name="departureAirport" required defaultValue="CAI">
-                {DEPARTURE_AIRPORTS.map((a) => (
-                  <option key={a.iata} value={a.iata}>
-                    {a.city} ({a.iata}) – {a.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <legend>{t.fields.photos}</legend>
+            <FilePicker files={photos} onChange={setPhotos} max={10} accept="image/*" hint={s.photosHint} />
           </fieldset>
 
           <div className="summary">
             <div>
-              <span>Totale da pagare</span>
-              <strong>{formatEur(tier.total)}</strong>
+              <span>{s.total}</span>
+              <strong>{fmt.eur(tier.total)}</strong>
             </div>
-            <small>
-              {formatEur(tier.messengerShare)} al Messenger · {formatEur(tier.platformFee)} commissione del sito. Paghi
-              solo dopo aver scelto il Messenger.
-            </small>
+            <small>{s.split(fmt.eur(tier.messengerShare), fmt.eur(tier.platformFee))}</small>
           </div>
 
           <ConsentFields role="cliente" />
@@ -165,7 +160,7 @@ export default function SendPage() {
           {error && <p className="alert alert-error">{error}</p>}
 
           <button className="btn btn-primary btn-block" disabled={sending}>
-            {sending ? "Invio in corso…" : "Continua: scegli volo e Messenger →"}
+            {sending ? s.sending : s.submit}
           </button>
         </form>
       </div>

@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import PrivateFile from "../components/PrivateFile";
 import { UnauthorizedError, adminApi, loadToken, logout } from "../lib/adminApi";
-import { CATEGORIES, europeAirportCity } from "../lib/catalog";
+import { CATEGORIES, airportName } from "../lib/catalog";
 import { formatEur, getTier } from "../lib/pricing";
 import { formatDate } from "../lib/session";
 import type { AdminMessenger, AdminShipment, AdminStats, MessengerStatus } from "../lib/types";
@@ -270,7 +270,7 @@ function MessengerRow({
           <div>
             <dt>Volo</dt>
             <dd>
-              {m.flight.flightNumber ?? "—"} · {m.flight.from} → {europeAirportCity(m.flight.to) ?? m.flight.to}
+              {m.flight.flightNumber ?? "—"} · {airportName(m.flight.from)} → {airportName(m.flight.to)}
             </dd>
           </div>
           <div>
@@ -318,7 +318,8 @@ function ShipmentRow({ s, token }: { s: AdminShipment; token: string }) {
           </span>
           <span className="muted small">
             {" "}
-            · {tier?.label} · {tier && formatEur(tier.total)} · da {s.departureAirport} · {formatDateTime(s.createdAt)}
+            · {tier?.label} · {tier && formatEur(tier.total)} · {airportName(s.departureAirport)}
+            {s.arrivalAirport && ` → ${airportName(s.arrivalAirport)}`} · {formatDateTime(s.createdAt)}
           </span>
         </div>
         <button className="link-btn" onClick={() => setOpen(!open)}>

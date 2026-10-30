@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useI18n } from "../i18n";
 
 type Props = {
   files: File[];
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export default function FilePicker({ files, onChange, max, accept, hint }: Props) {
+  const { t } = useI18n();
   const previews = useMemo(
     () => files.map((f) => (f.type.startsWith("image/") ? URL.createObjectURL(f) : null)),
     [files],
@@ -26,7 +28,7 @@ export default function FilePicker({ files, onChange, max, accept, hint }: Props
         {files.map((f, i) => (
           <div key={`${f.name}-${i}`} className="thumb">
             {previews[i] ? <img src={previews[i]!} alt={f.name} /> : <span className="thumb-file">📄 {f.name}</span>}
-            <button type="button" aria-label={`Rimuovi ${f.name}`} onClick={() => onChange(files.filter((_, j) => j !== i))}>
+            <button type="button" aria-label={t.files.remove(f.name)} onClick={() => onChange(files.filter((_, j) => j !== i))}>
               ×
             </button>
           </div>
@@ -43,12 +45,12 @@ export default function FilePicker({ files, onChange, max, accept, hint }: Props
               }}
             />
             <span>＋</span>
-            <small>Aggiungi</small>
+            <small>{t.files.add}</small>
           </label>
         )}
       </div>
       <p className="hint">
-        {files.length}/{max} · {hint}
+        {t.files.count(files.length, max)} · {hint}
       </p>
     </div>
   );

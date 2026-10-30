@@ -1,13 +1,17 @@
 # Amanah – sito web
 
-Piattaforma che mette in contatto chi vive in Europa con passeggeri ("Messenger") che volano dal Cairo (CAI)
-o da Alessandria (HBE) verso l'Europa e portano documenti, vestiti, dolci e oggetti personali.
+Piattaforma che mette in contatto clienti e passeggeri ("Messenger") che volano tra l'Africa e l'Europa,
+in entrambi i sensi, e portano documenti, vestiti, dolci e oggetti personali.
+
+Lingue: arabo (da destra a sinistra), tedesco, inglese, spagnolo, francese e italiano. La lingua si sceglie
+dal menu in alto, viene ricordata nel browser e all'inizio segue quella del dispositivo.
 
 ## Flusso
 
-1. **Cliente** (`/spedisci`): dati personali (18+), indirizzo e CAP, categorie, merce precisa, descrizione,
-   1–10 foto, fascia di peso e aeroporto di partenza.
-2. **Voli & Messenger** (`/voli`): tabella delle partenze del giorno verso l'Europa e Messenger disponibili.
+1. **Cliente** (`/spedisci`): tratta ("da dove" in Africa o in Europa, "verso dove" nell'altro continente),
+   fascia di peso, dati personali (18+), indirizzo e CAP, categorie, merce precisa, descrizione, 1–10 foto.
+2. **Voli & Messenger** (`/voli`): tabella delle partenze del giorno verso l'altro continente e Messenger
+   disponibili. Si può pagare solo un Messenger con la stessa partenza e lo stesso paese di arrivo.
    Il cliente sceglie un Messenger e paga con Stripe Checkout.
 3. **Pagamento riuscito** (`/pagamento/successo`): il server verifica il pagamento su Stripe e solo allora
    mostra telefono, WhatsApp ed email del Messenger.
@@ -25,6 +29,12 @@ o da Alessandria (HBE) verso l'Europa e portano documenti, vestiti, dolci e ogge
 | 5–15 kg  | 18 €   | 9 €       | 9 €    |
 | 15–20 kg | 25 €   | 12,50 €   | 12,50 €|
 | 20–25 kg | 30 €   | 15 €      | 15 €   |
+
+## Traduzioni
+
+I testi sono in `src/i18n/` (un file per lingua). `it.ts` è il riferimento: TypeScript segnala ogni testo
+mancante nelle altre lingue. Il server risponde agli errori con un codice (`code`) che il sito traduce.
+Il pannello admin resta in italiano. Aeroporti e nomi delle città sono in `src/lib/catalog.ts`.
 
 ## Architettura
 

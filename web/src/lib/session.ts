@@ -33,8 +33,8 @@ export function tomorrowIso(): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function formatDate(iso: string): string {
-  return new Date(`${iso}T12:00:00`).toLocaleDateString("it-IT", {
+export function formatDate(iso: string, locale = "it-IT"): string {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString(locale, {
     weekday: "short",
     day: "numeric",
     month: "long",

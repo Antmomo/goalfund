@@ -16,10 +16,10 @@ async function review(req: Request): Promise<Response> {
   const body = (await req.json().catch(() => ({}))) as { id?: string; action?: string; reason?: string };
   const next: Record<string, MessengerStatus> = { approve: "verificato", reject: "rifiutato", reset: "in_verifica" };
   const status = next[body.action ?? ""];
-  if (!body.id || !status) return fail("Richiesta non valida.");
+  if (!body.id || !status) return fail("invalidRequest");
 
   const messenger = await getMessenger(body.id);
-  if (!messenger) return fail("Messenger non trovato.", 404);
+  if (!messenger) return fail("messengerNotFound", 404);
 
   messenger.status = status;
   messenger.verified = status === "verificato";
@@ -35,7 +35,7 @@ export default async (req: Request) => {
   if (denied) return denied;
   if (req.method === "GET") return list();
   if (req.method === "POST") return review(req);
-  return fail("Metodo non consentito.", 405);
+  return fail("methodNotAllowed", 405);
 };
 
 export const config: Config = { path: "/api/admin/messengers" };
