@@ -4,13 +4,24 @@ import { UnauthorizedError, adminApi, loadToken, logout } from "../lib/adminApi"
 import { CATEGORIES, airportName } from "../lib/catalog";
 import { formatEur, getTier } from "../lib/pricing";
 import { formatDate } from "../lib/session";
-import type { AdminMessenger, AdminShipment, AdminStats, MessengerStatus } from "../lib/types";
+import { orderStage, type AdminMessenger, type AdminShipment, type AdminStats, type MessengerStatus, type OrderStage, type Review } from "../lib/types";
 
 const STATUS_LABEL: Record<MessengerStatus, string> = {
   in_verifica: "In verifica",
   verificato: "Verificato",
   rifiutato: "Rifiutato",
 };
+
+const STAGE_LABEL: Record<OrderStage, string> = {
+  pagato: "Pagata – attende conferma del cliente",
+  confermato: "Confermata dal cliente – attende il ritiro",
+  ritirato: "Ritirata dal Messenger – in viaggio",
+  consegnato: "Consegnata",
+};
+
+const PAYOUT_LABEL = { in_attesa: "in attesa della consegna", da_pagare: "DA PAGARE", pagato: "pagato" } as const;
+
+const stars = (r?: Review) => (r ? `${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}${r.comment ? ` – “${r.comment}”` : ""}` : "—");
 
 const formatDateTime = (iso: string) =>
   new Date(iso).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -138,6 +149,16 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
     }
   }
 
+  async function markPaidOut(s: AdminShipment) {
+    if (!window.confirm(`Confermi di aver pagato al Messenger ${s.messengerName ?? ""} la sua quota?`)) return;
+    try {
+      await adminApi.markPaidOut(token, s.id);
+      await load();
+    } catch (err) {
+      handle(err);
+    }
+  }
+
   async function removeShipment(s: AdminShipment) {
     const warning = s.status === "pagata" ? "\n\nATTENZIONE: questa spedizione risulta PAGATA. Il pagamento resta su Stripe." : "";
     if (!window.confirm(`Eliminare definitivamente la spedizione "${s.goodsType}" e le sue foto?${warning}`)) return;
@@ -177,7 +198,12 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
             <Stat label="Spedizioni pagate" value={String(stats.shipmentsPaid)} sub={`${stats.shipmentsWaiting} in attesa`} />
             <Stat label="Incassato" value={formatEur(stats.revenueTotal)} sub={`${formatEur(stats.platformFees)} commissioni`} />
             <Stat label="IVA da versare (22%)" value={formatEur(stats.vatDue)} sub={`${formatEur(stats.platformFeesNet)} commissioni nette`} />
-            <Stat label="Da pagare ai Messenger" value={formatEur(stats.messengerPayouts)} />
+            <Stat
+              label="Da pagare ai Messenger"
+              value={formatEur(stats.messengerPayouts)}
+              sub={`${formatEur(stats.messengerPaidOut)} già pagati`}
+              highlight={stats.messengerPayouts > 0}
+            />
           </div>
         )}
 
@@ -218,7 +244,7 @@ function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void 
           <div className="admin-list">
             {shipments.length === 0 && <p className="empty card">Nessuna spedizione registrata.</p>}
             {shipments.map((s) => (
-              <ShipmentRow key={s.id} s={s} token={token} onDelete={removeShipment} />
+              <ShipmentRow key={s.id} s={s} token={token} onDelete={removeShipment} onPaidOut={markPaidOut} />
             ))}
           </div>
         )}
@@ -328,7 +354,18 @@ function MessengerRow({
   );
 }
 
-function ShipmentRow({ s, token, onDelete }: { s: AdminShipment; token: string; onDelete: (s: AdminShipment) => void }) {
+function ShipmentRow({
+  s,
+  token,
+  onDelete,
+  onPaidOut,
+}: {
+  s: AdminShipment;
+  token: string;
+  onDelete: (s: AdminShipment) => void;
+  onPaidOut: (s: AdminShipment) => void;
+}) {
+  const origin = window.location.origin;
   const [open, setOpen] = useState(false);
   const tier = getTier(s.tierId);
   const categories = s.categories.map((c) => CATEGORIES.find((k) => k.id === c)?.emoji ?? "").join(" ");
@@ -394,6 +431,48 @@ function ShipmentRow({ s, token, onDelete }: { s: AdminShipment; token: string; 
               <dt>Descrizione</dt>
               <dd className="pre">{s.description}</dd>
             </div>
+            {s.order && (
+              <>
+                <div>
+                  <dt>Ordine</dt>
+                  <dd>{STAGE_LABEL[orderStage(s.order)]}</dd>
+                </div>
+                <div>
+                  <dt>Quota Messenger</dt>
+                  <dd>
+                    {tier && formatEur(tier.messengerShare)} · {PAYOUT_LABEL[s.order.payout]}
+                    {s.order.payout === "da_pagare" && (
+                      <>
+                        {" "}
+                        <button className="btn btn-primary btn-sm" onClick={() => onPaidOut(s)}>
+                          Segna come pagato
+                        </button>
+                      </>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Email</dt>
+                  <dd>{s.order.emailsSentAt ? `inviate ${formatDateTime(s.order.emailsSentAt)}` : "non inviate (Resend non configurato)"}</dd>
+                </div>
+                <div>
+                  <dt>Link cliente</dt>
+                  <dd className="small">{`${origin}/ordine/${s.id}?k=${s.order.clientToken}`}</dd>
+                </div>
+                <div>
+                  <dt>Link Messenger</dt>
+                  <dd className="small">{`${origin}/ordine/${s.id}?k=${s.order.messengerToken}`}</dd>
+                </div>
+                <div>
+                  <dt>Recensione cliente</dt>
+                  <dd>{stars(s.order.reviews.byClient)}</dd>
+                </div>
+                <div>
+                  <dt>Recensione Messenger</dt>
+                  <dd>{stars(s.order.reviews.byMessenger)}</dd>
+                </div>
+              </>
+            )}
           </dl>
           <div>
             <p className="small muted">Foto dell'oggetto</p>

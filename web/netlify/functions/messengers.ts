@@ -1,4 +1,5 @@
 import type { Config } from "@netlify/functions";
+import { isLang } from "../../src/i18n/types";
 import { isValidRoute } from "../../src/lib/catalog";
 import { messengerStatus, type Messenger } from "../../src/lib/types";
 import {
@@ -69,6 +70,7 @@ async function create(req: Request): Promise<Response> {
     verified: false,
     status: "in_verifica",
     terms: termsAcceptance(form),
+    lang: isLang(form.get("lang")) ? String(form.get("lang")) : undefined,
   };
 
   messenger.documentKeys = await saveFiles(messengerDocuments(), messenger.id, documents);

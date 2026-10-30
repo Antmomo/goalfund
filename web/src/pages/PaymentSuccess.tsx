@@ -67,6 +67,13 @@ export default function PaymentSuccess() {
           <p>{s.paid(fmt.eur(result.amountPaid))}</p>
         </div>
 
+        <div className="card order-cta">
+          <Link to={result.orderUrl} className="btn btn-gold btn-block">
+            {t.order.openOrder} →
+          </Link>
+          <p className="hint">{t.order.emailNote}</p>
+        </div>
+
         <div className="card contact-card">
           <h2>
             {messenger.firstName} {messenger.lastName}

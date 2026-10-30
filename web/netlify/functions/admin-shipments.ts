@@ -14,10 +14,23 @@ async function remove(url: URL): Promise<Response> {
   return json({ deleted: shipment.id });
 }
 
+/** Segna come pagata la quota del Messenger dopo la consegna confermata. */
+async function markPaidOut(req: Request): Promise<Response> {
+  const { id } = (await req.json().catch(() => ({}))) as { id?: string };
+  const shipment = await getShipment(id ?? "");
+  if (!shipment) return fail("shipmentNotFound", 404);
+  if (shipment.order?.payout !== "da_pagare") return fail("stepNotAllowed", 409);
+  shipment.order.payout = "pagato";
+  shipment.order.payoutPaidAt = new Date().toISOString();
+  await shipments().setJSON(shipment.id, shipment);
+  return json({ ok: true });
+}
+
 export default async (req: Request) => {
   const denied = requireAdmin(req);
   if (denied) return denied;
   if (req.method === "DELETE") return remove(new URL(req.url));
+  if (req.method === "POST") return markPaidOut(req);
   if (req.method !== "GET") return fail("methodNotAllowed", 405);
 
   const [allShipments, allMessengers] = await Promise.all([
@@ -34,9 +47,11 @@ export default async (req: Request) => {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const paid = allShipments.filter((s) => s.status === "pagata");
-  // Somma in centesimi per evitare errori di arrotondamento.
-  const sum = (pick: (t: NonNullable<ReturnType<typeof getTier>>) => number) =>
-    paid.reduce((acc, s) => acc + (getTier(s.tierId) ? Math.round(pick(getTier(s.tierId)!) * 100) : 0), 0) / 100;
+  // Somme in centesimi per evitare errori di arrotondamento.
+  type Pick = (t: NonNullable<ReturnType<typeof getTier>>) => number;
+  const sumWhere = (keep: (s: Shipment) => boolean, pick: Pick) =>
+    paid.filter(keep).reduce((acc, s) => acc + (getTier(s.tierId) ? Math.round(pick(getTier(s.tierId)!) * 100) : 0), 0) / 100;
+  const sum = (pick: Pick) => sumWhere(() => true, pick);
 
   const stats: AdminStats = {
     messengersPending: allMessengers.filter((m) => messengerStatus(m) === "in_verifica").length,
@@ -47,7 +62,8 @@ export default async (req: Request) => {
     platformFees: sum((t) => t.platformFee),
     platformFeesNet: sum((t) => feeVat(t.platformFee).net),
     vatDue: sum((t) => feeVat(t.platformFee).vat),
-    messengerPayouts: sum((t) => t.messengerShare),
+    messengerPayouts: sumWhere((s) => s.order?.payout === "da_pagare", (t) => t.messengerShare),
+    messengerPaidOut: sumWhere((s) => s.order?.payout === "pagato", (t) => t.messengerShare),
   };
 
   return json({ shipments: result, stats });

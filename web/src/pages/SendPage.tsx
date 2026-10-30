@@ -11,7 +11,7 @@ import { VAT_RATE, WEIGHT_TIERS, feeVat, getTier } from "../lib/pricing";
 import { saveShipment } from "../lib/session";
 
 export default function SendPage() {
-  const { t, fmt } = useI18n();
+  const { t, fmt, lang } = useI18n();
   const s = t.send;
   const navigate = useNavigate();
   const [categories, setCategories] = useState<string[]>([]);
@@ -34,6 +34,7 @@ export default function SendPage() {
     const form = new FormData(e.currentTarget);
     categories.forEach((c) => form.append("categories", c));
     form.set("tierId", tierId);
+    form.set("lang", lang);
 
     setSending(true);
     try {

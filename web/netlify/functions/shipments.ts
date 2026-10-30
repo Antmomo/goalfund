@@ -1,5 +1,6 @@
 import type { Config } from "@netlify/functions";
 import { CATEGORIES, isValidRoute } from "../../src/lib/catalog";
+import { isLang } from "../../src/i18n/types";
 import { getTier } from "../../src/lib/pricing";
 import type { Shipment } from "../../src/lib/types";
 import { ValidationError, email, fail, failFrom, files, json, phone, termsAcceptance, text } from "../lib/http";
@@ -51,6 +52,7 @@ export default async (req: Request) => {
       arrivalAirport,
       photoKeys: [],
       terms: termsAcceptance(form),
+      lang: isLang(form.get("lang")) ? String(form.get("lang")) : undefined,
     };
 
     shipment.photoKeys = await saveFiles(shipmentPhotos(), shipment.id, photos);

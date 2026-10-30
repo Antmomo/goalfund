@@ -1,6 +1,6 @@
 import { ApiError } from "../i18n";
 import type { ErrParams, ErrorCode } from "../i18n/types";
-import type { FlightsResponse, PublicMessenger, ShipmentSummary } from "./types";
+import type { FlightsResponse, OrderView, PublicMessenger, ShipmentSummary } from "./types";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
@@ -33,10 +33,21 @@ export const api = {
       body: JSON.stringify({ shipmentId, messengerId, lang }),
     }),
 
+  getOrder: (id: string, k: string) => request<OrderView>(`/api/order?${new URLSearchParams({ id, k })}`),
+
+  orderAction: (body: Record<string, unknown> & { id: string; k: string; action: string }) =>
+    request<OrderView>("/api/order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+
   confirm: (sessionId: string) =>
     request<{
       shipmentId: string;
       amountPaid: number;
+      orderUrl: string;
+      emailSent: boolean;
       messenger: {
         firstName: string;
         lastName: string;

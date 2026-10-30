@@ -39,6 +39,7 @@ export function toPublic(m: Messenger): PublicMessenger {
     flight: m.flight,
     availableKg: m.availableKg,
     verified: messengerStatus(m) === "verificato",
+    rating: m.ratingCount ? { average: Math.round((m.ratingTotal! / m.ratingCount) * 10) / 10, count: m.ratingCount } : undefined,
   };
 }
 

@@ -16,7 +16,14 @@ dal menu in alto, viene ricordata nel browser e all'inizio segue quella del disp
 3. **Pagamento riuscito** (`/pagamento/successo`): il server verifica il pagamento su Stripe e solo allora
    mostra telefono, WhatsApp ed email del Messenger.
 4. **Messenger** (`/messenger`): dati, documento d'identità (privato), volo, data e kg disponibili.
-5. **Admin** (`/admin`, non collegato dal menu): accesso con password, verifica dei Messenger
+5. **Ordine** (`/ordine/:id?k=…`): dopo il pagamento cliente e Messenger ricevono per email un link
+   personale. Passaggi: il cliente conferma di aver letto i requisiti e (casella viola) il dovere di
+   mostrare la merce → il Messenger conferma di averla controllata e imballata in presenza e la ritira →
+   il cliente conferma la consegna, che sblocca la quota del Messenger ("da pagare" nel pannello admin) →
+   recensioni a vicenda (stelle 1–5; la media appare nella scheda pubblica del Messenger).
+   Il pagamento al Messenger per ora è manuale: l'admin lo segna come pagato. Per il bonifico automatico
+   serve Stripe Connect.
+6. **Admin** (`/admin`, non collegato dal menu): accesso con password, verifica dei Messenger
    (documenti, approva / rifiuta con motivo / rimetti in verifica), elenco spedizioni con foto e dati cliente,
    riepilogo incassi, commissioni e quote da pagare ai Messenger.
    I Messenger rifiutati spariscono dall'elenco pubblico e non possono essere pagati.
@@ -51,7 +58,8 @@ Il pannello admin resta in italiano. Aeroporti e nomi delle città sono in `src/
 ## Variabili d'ambiente
 
 Vedi `.env.example`: `STRIPE_SECRET_KEY` (obbligatoria per i pagamenti), `ADMIN_PASSWORD` (obbligatoria per
-`/admin`), `ADMIN_SESSION_SECRET` e `AERODATABOX_API_KEY` (facoltative).
+`/admin`), `RESEND_API_KEY` e `EMAIL_FROM` (email degli ordini), `ADMIN_SESSION_SECRET` e
+`AERODATABOX_API_KEY` (facoltative).
 
 ## Sviluppo locale
 

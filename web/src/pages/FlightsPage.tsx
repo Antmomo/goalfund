@@ -240,6 +240,11 @@ export default function FlightsPage() {
                   <div>
                     <strong>{m.displayName}</strong>
                     <div className={m.verified ? "badge badge-ok" : "badge"}>{m.verified ? ft.verified : ft.docUploaded}</div>
+                    {m.rating && (
+                      <div className="rating">
+                        ★ {m.rating.average} <span className="muted">({m.rating.count})</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <dl>

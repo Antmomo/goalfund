@@ -1233,3 +1233,145 @@ table.flights {
 .track-link:hover {
   text-decoration: underline;
 }
+
+/* Ordine */
+.order-cta {
+  margin-top: 24px;
+  padding: 20px;
+  text-align: center;
+}
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.timeline li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.timeline .dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--line);
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.timeline li.reached {
+  color: var(--bordeaux-deep);
+  font-weight: 600;
+}
+
+.timeline li.reached .dot {
+  background: var(--bordeaux);
+  color: var(--gold-soft);
+}
+
+.order-info,
+.order-step {
+  margin-bottom: 16px;
+}
+
+.order-info h3 {
+  margin-top: 18px;
+  font-size: 1.05rem;
+}
+
+.order-step h2 {
+  font-size: 1.2rem;
+}
+
+.order-step.locked {
+  opacity: 0.6;
+}
+
+.order-step textarea {
+  margin: 10px 0;
+}
+
+.order-check {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.order-check input {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  accent-color: var(--bordeaux);
+}
+
+.duty-box {
+  background: #5b2a86;
+  border-color: #5b2a86;
+  color: var(--white);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(91, 42, 134, 0.35);
+}
+
+.duty-box input {
+  width: 28px;
+  height: 28px;
+  accent-color: var(--gold);
+}
+
+.step-done {
+  color: var(--ok);
+  margin: 6px 0;
+}
+
+.stars {
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+}
+
+.stars span,
+.stars button {
+  color: var(--line);
+}
+
+.stars button {
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.stars .on {
+  color: var(--gold);
+}
+
+.their-review {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.rating {
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 600;
+}

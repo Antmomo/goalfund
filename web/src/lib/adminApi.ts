@@ -70,6 +70,13 @@ export const adminApi = {
   deleteShipment: (token: string, id: string) =>
     call<{ deleted: string }>(token, `/api/admin/shipments?${new URLSearchParams({ id })}`, { method: "DELETE" }),
 
+  markPaidOut: (token: string, id: string) =>
+    call<{ ok: boolean }>(token, "/api/admin/shipments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }),
+
   shipments: (token: string) => call<{ shipments: AdminShipment[]; stats: AdminStats }>(token, "/api/admin/shipments"),
 
   /** Scarica un file privato e restituisce un URL locale (blob:) da mostrare o aprire. */

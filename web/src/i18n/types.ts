@@ -62,6 +62,11 @@ export const ERROR_CODES = [
   "photoRequired",
   "documentRequired",
   "paymentNotStarted",
+  "invalidOrderLink",
+  "stepNotAllowed",
+  "confirmationsRequired",
+  "alreadyReviewed",
+  "invalidRating",
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

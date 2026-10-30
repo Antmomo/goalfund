@@ -8,6 +8,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
 import TermsPage from "./pages/TermsPage";
+import OrderPage from "./pages/OrderPage";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="messenger" element={<MessengerPage />} />
         <Route path="voli" element={<FlightsPage />} />
         <Route path="pagamento/successo" element={<PaymentSuccess />} />
+        <Route path="ordine/:id" element={<OrderPage />} />
         <Route path="condizioni" element={<TermsPage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="*" element={<NotFound />} />

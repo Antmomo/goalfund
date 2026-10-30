@@ -10,7 +10,7 @@ import { tomorrowIso } from "../lib/session";
 import type { PublicMessenger } from "../lib/types";
 
 export default function MessengerPage() {
-  const { t, fmt } = useI18n();
+  const { t, fmt, lang } = useI18n();
   const m = t.messenger;
   const [route, setRoute] = useState({ from: "CAI", to: "FCO" });
   const [documents, setDocuments] = useState<File[]>([]);
@@ -24,6 +24,7 @@ export default function MessengerPage() {
     if (documents.length === 0) return setError(t.errors.documentRequired({}));
 
     const form = new FormData(e.currentTarget);
+    form.set("lang", lang);
     setSending(true);
     try {
       const prepared = await Promise.all(

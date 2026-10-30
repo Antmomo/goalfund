@@ -29,6 +29,55 @@ export type Shipment = {
   messengerId?: string;
   stripeSessionId?: string;
   paidAt?: string;
+  /** Lingua del cliente, per le email. */
+  lang?: string;
+  /** Avanzamento dell'ordine dopo il pagamento. */
+  order?: Order;
+};
+
+export type Review = { rating: number; comment?: string; createdAt: string };
+
+export type PayoutStatus = "in_attesa" | "da_pagare" | "pagato";
+
+export type Order = {
+  /** Link segreti personali, inviati per email a cliente e Messenger. */
+  clientToken: string;
+  messengerToken: string;
+  /** Il cliente conferma i requisiti e il dovere di mostrare la merce. */
+  clientAcceptedAt?: string;
+  /** Il Messenger ha controllato e imballato la merce in presenza del cliente e l'ha ritirata. */
+  pickedUpAt?: string;
+  /** Il cliente conferma di aver ricevuto la merce: il pagamento al Messenger viene sbloccato. */
+  deliveredAt?: string;
+  payout: PayoutStatus;
+  payoutPaidAt?: string;
+  reviews: { byClient?: Review; byMessenger?: Review };
+  emailsSentAt?: string;
+};
+
+export type OrderStage = "pagato" | "confermato" | "ritirato" | "consegnato";
+
+export function orderStage(order: Order): OrderStage {
+  if (order.deliveredAt) return "consegnato";
+  if (order.pickedUpAt) return "ritirato";
+  if (order.clientAcceptedAt) return "confermato";
+  return "pagato";
+}
+
+/** Ciò che vede chi apre il link personale dell'ordine (cliente o Messenger). */
+export type OrderView = {
+  role: "client" | "messenger";
+  code: string;
+  stage: OrderStage;
+  goodsType: string;
+  description: string;
+  categories: string[];
+  tierId: string;
+  route: { from: string; to: string; date: string; flightNumber?: string };
+  counterpart: { name: string; phone: string; email: string; address?: string };
+  order: Pick<Order, "clientAcceptedAt" | "pickedUpAt" | "deliveredAt" | "payout">;
+  myReview?: Review;
+  theirReview?: Review;
 };
 
 export type MessengerStatus = "in_verifica" | "verificato" | "rifiutato";
@@ -45,6 +94,10 @@ export type Messenger = {
   availableKg: number;
   verified: boolean;
   terms?: TermsAcceptance;
+  lang?: string;
+  /** Somma e numero dei voti ricevuti dai clienti. */
+  ratingTotal?: number;
+  ratingCount?: number;
   /** Assente nei Messenger registrati prima del pannello admin: vedi messengerStatus(). */
   status?: MessengerStatus;
   reviewedAt?: string;
@@ -58,6 +111,7 @@ export type PublicMessenger = {
   flight: Messenger["flight"];
   availableKg: number;
   verified: boolean;
+  rating?: { average: number; count: number };
 };
 
 export type Flight = {
@@ -106,5 +160,8 @@ export type AdminStats = {
   platformFeesNet: number;
   /** IVA contenuta nelle commissioni, da versare. */
   vatDue: number;
+  /** Quote dei Messenger con consegna confermata, ancora da pagare. */
   messengerPayouts: number;
+  /** Quote dei Messenger già pagate. */
+  messengerPaidOut: number;
 };
