@@ -1,3 +1,5 @@
+import { TERMS_VERSION, type TermsAcceptance } from "../../src/lib/terms";
+
 export function json(data: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -35,6 +37,15 @@ export function isoDate(value: string, label: string): string {
     throw new ValidationError(`${label}: data non valida.`);
   }
   return value;
+}
+
+/** Verifica le due accettazioni obbligatorie e restituisce la prova da salvare. */
+export function termsAcceptance(form: FormData): TermsAcceptance {
+  if (form.get("consent") !== "on") throw new ValidationError("Devi accettare le condizioni del servizio.");
+  if (form.get("liabilityConsent") !== "on") {
+    throw new ValidationError("Devi approvare le clausole sulla responsabilità (artt. 1341 e 1342 c.c.).");
+  }
+  return { version: TERMS_VERSION, acceptedAt: new Date().toISOString() };
 }
 
 export function todayIso(): string {

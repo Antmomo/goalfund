@@ -1121,3 +1121,40 @@ table.flights {
 .doc-loading {
   color: var(--muted);
 }
+
+/* Condizioni */
+.form .consent-strong {
+  background: var(--bordeaux-tint);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--ink);
+}
+
+.terms h2 {
+  font-size: 1.35rem;
+  margin-top: 32px;
+  scroll-margin-top: 80px;
+}
+
+.terms li {
+  margin-bottom: 6px;
+}
+
+.terms-highlight {
+  background: var(--bordeaux-deep);
+  color: var(--white);
+  border-left: 4px solid var(--gold);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 20px 0;
+}
+
+.home-disclaimer {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.footer-link {
+  color: var(--gold-soft);
+}

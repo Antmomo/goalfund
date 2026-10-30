@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import PricingTable from "../components/PricingTable";
+import { DISCLAIMER_SHORT } from "../lib/terms";
 
 export default function Home() {
   return (
@@ -90,6 +91,11 @@ export default function Home() {
             <h3>Pagamento sicuro</h3>
             <p>I pagamenti passano da Stripe: il sito non vede mai i dati della tua carta.</p>
           </div>
+        </div>
+        <div className="container">
+          <p className="alert alert-info home-disclaimer">
+            ⚖️ {DISCLAIMER_SHORT} <Link to="/condizioni">Leggi le condizioni del servizio</Link>
+          </p>
         </div>
       </section>
     </>

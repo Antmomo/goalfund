@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { DEPARTURE_AIRPORTS, europeAirportCity, normalizeFlightNumber } from "../lib/catalog";
 import { formatEur, getTier } from "../lib/pricing";
 import { formatDate, loadShipment, tomorrowIso } from "../lib/session";
+import { DISCLAIMER_SHORT } from "../lib/terms";
 import type { FlightsResponse, PublicMessenger } from "../lib/types";
 
 export default function FlightsPage() {
@@ -172,6 +173,9 @@ export default function FlightsPage() {
             <Link to="/messenger">diventa tu un Messenger</Link>.
           </p>
         )}
+        <p className="alert alert-info">
+          ⚖️ {DISCLAIMER_SHORT} <Link to="/condizioni">Leggi le condizioni</Link>
+        </p>
         <div className="messenger-grid">
           {visibleMessengers.map((m) => {
             const fits = !tier || m.availableKg >= tier.maxKg;

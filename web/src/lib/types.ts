@@ -1,3 +1,5 @@
+import type { TermsAcceptance } from "./terms";
+
 export type ShipmentStatus = "in_attesa" | "pagata";
 
 export type Shipment = {
@@ -21,6 +23,7 @@ export type Shipment = {
   tierId: string;
   departureAirport: string;
   photoKeys: string[];
+  terms?: TermsAcceptance;
   messengerId?: string;
   stripeSessionId?: string;
   paidAt?: string;
@@ -39,6 +42,7 @@ export type Messenger = {
   flight: { from: string; to: string; date: string; flightNumber?: string };
   availableKg: number;
   verified: boolean;
+  terms?: TermsAcceptance;
   /** Assente nei Messenger registrati prima del pannello admin: vedi messengerStatus(). */
   status?: MessengerStatus;
   reviewedAt?: string;

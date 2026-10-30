@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { DISCLAIMER_SHORT } from "../lib/terms";
 
 const LINKS = [
   { to: "/spedisci", label: "Spedisci" },
@@ -49,7 +50,12 @@ export default function Layout() {
             <p>Dal tuo paese a casa tua, con persone di fiducia.</p>
           </div>
           <p className="muted-light">
-            Pagamenti sicuri con Stripe · I dati dei Messenger restano riservati fino al pagamento.
+            {DISCLAIMER_SHORT}
+            <br />
+            <Link to="/condizioni" className="footer-link">
+              Condizioni e responsabilità
+            </Link>{" "}
+            · Pagamenti sicuri con Stripe
             <br />© {new Date().getFullYear()} Amanah
           </p>
         </div>

@@ -2,7 +2,7 @@ import type { Config } from "@netlify/functions";
 import { DEPARTURE_AIRPORTS, CATEGORIES } from "../../src/lib/catalog";
 import { getTier } from "../../src/lib/pricing";
 import type { Shipment } from "../../src/lib/types";
-import { ValidationError, email, fail, files, json, phone, text } from "../lib/http";
+import { ValidationError, email, fail, files, json, phone, termsAcceptance, text } from "../lib/http";
 import { saveFiles, shipmentPhotos, shipments } from "../lib/store";
 
 export default async (req: Request) => {
@@ -27,7 +27,6 @@ export default async (req: Request) => {
       throw new ValidationError("Seleziona l'aeroporto di partenza.");
     }
 
-    if (form.get("consent") !== "on") throw new ValidationError("Devi accettare le condizioni del servizio.");
 
     const photos = files(form, "photos", {
       min: 1,
@@ -37,6 +36,7 @@ export default async (req: Request) => {
       label: "Foto dell'oggetto",
     });
 
+    const terms = termsAcceptance(form);
     const id = crypto.randomUUID();
     const shipment: Shipment = {
       id,
@@ -59,6 +59,7 @@ export default async (req: Request) => {
       tierId: tier.id,
       departureAirport,
       photoKeys: [],
+      terms,
     };
 
     shipment.photoKeys = await saveFiles(shipmentPhotos(), id, photos);

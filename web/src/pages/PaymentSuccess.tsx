@@ -87,6 +87,10 @@ export default function PaymentSuccess() {
             Contatta il Messenger per accordarvi su dove consegnare l'oggetto in Egitto e dove ritirarlo in Europa.
             Codice spedizione: <span className="mono">{result.shipmentId.slice(0, 8).toUpperCase()}</span>
           </p>
+          <p className="hint">
+            ⚖️ Da qui in poi l'accordo è direttamente tra te e il Messenger: Amanah non è responsabile della merce né
+            di quanto avviene dopo la messa in contatto. <Link to="/condizioni">Condizioni</Link>
+          </p>
         </div>
       </div>
     </section>

@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
+import ConsentFields from "../components/ConsentFields";
 import FilePicker from "../components/FilePicker";
 import { api } from "../lib/api";
 import { DEPARTURE_AIRPORTS, EUROPE_AIRPORTS } from "../lib/catalog";
@@ -136,11 +137,7 @@ export default function MessengerPage() {
             </div>
           </fieldset>
 
-          <label className="consent">
-            <input type="checkbox" name="consent" required />
-            Mi impegno a verificare il contenuto di ogni oggetto prima di accettarlo e a non trasportare merci vietate.
-            Accetto le condizioni del servizio e il trattamento dei miei dati.
-          </label>
+          <ConsentFields role="messenger" />
 
           {error && <p className="alert alert-error">{error}</p>}
 

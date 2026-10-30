@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ConsentFields from "../components/ConsentFields";
 import FilePicker from "../components/FilePicker";
 import { api } from "../lib/api";
 import { CATEGORIES, DEPARTURE_AIRPORTS } from "../lib/catalog";
@@ -159,11 +160,7 @@ export default function SendPage() {
             </small>
           </div>
 
-          <label className="consent">
-            <input type="checkbox" name="consent" required />
-            Dichiaro che l'oggetto non contiene merci vietate o pericolose e accetto le condizioni del servizio e il
-            trattamento dei miei dati.
-          </label>
+          <ConsentFields role="cliente" />
 
           {error && <p className="alert alert-error">{error}</p>}
 

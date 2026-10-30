@@ -1,5 +1,6 @@
 import type { Config } from "@netlify/functions";
 import { getTier } from "../../src/lib/pricing";
+import { DISCLAIMER_SHORT } from "../../src/lib/terms";
 import { messengerStatus } from "../../src/lib/types";
 import { fail, json, todayIso } from "../lib/http";
 import { getMessenger, getShipment } from "../lib/store";
@@ -45,6 +46,9 @@ export default async (req: Request) => {
         },
       },
     ],
+    custom_text: {
+      submit: { message: DISCLAIMER_SHORT },
+    },
     metadata: {
       shipmentId: shipment.id,
       messengerId: messenger.id,
